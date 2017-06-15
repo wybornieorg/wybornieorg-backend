@@ -27,7 +27,6 @@ if (blog.length!=0) {
   for (var i = blog.length-1; i >= 0; i--) {
     date = fs.statSync('views/blog/' + blog[i]).mtime.toLocaleString()
     blog[i]=fs.readFileSync('views/blog/' + blog[i], 'utf8')
-    blog[i]=blog[i].replace('{date}',date)
     blogbody+=blog[i]
   }
 }
