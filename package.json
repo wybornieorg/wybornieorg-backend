@@ -5,14 +5,17 @@
   "main": "main.js",
   "dependencies": {
     "cheerio": "^1.0.0-rc.1",
+    "co": "^4.6.0",
     "koa": "^2.2.0",
+    "koa-router": "^7.2.0",
+    "koa-static": "^3.0.0",
     "nodemon": "^1.11.0",
     "request": "^2.81.0"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon main.js -e js,pug,styl"
+    "start": "nodemon main.js -e js,html,css"
   },
   "author": "fraunos",
   "license": "ISC"

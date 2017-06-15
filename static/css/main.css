@@ -1,0 +1,26 @@
+ @import url('https://fonts.googleapis.com/css?family=Spectral');
+body {
+  margin: 5% 10%;
+  font-family: Spectral;
+  text-align: justify;
+}
+
+.wrap > *{
+  display:block;
+  float: right;
+}
+article{
+  padding: 5% 10%;
+}
+
+.side{
+  width: 30%;
+  background-color: #eef;
+}
+.side > p{
+  padding: 5%;
+}
+
+.blog{
+  width: 70%;
+}
