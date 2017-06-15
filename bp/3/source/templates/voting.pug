@@ -1,0 +1,14 @@
+doctype html
+head
+  meta(charset="utf-8")
+  script(src='https://unpkg.com/vue/dist/vue.js')
+  script(src='https://code.jquery.com/jquery-3.1.1.min.js')
+
+body
+  #app-2
+    h1 {{json.title}}
+    h2 {{json.nr.Glosowania}}
+    ol
+      li(v-for="deputy in deputies") {{deputy.name}}
+
+  script(src='js/vuetest.js')

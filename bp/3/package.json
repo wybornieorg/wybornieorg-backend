@@ -1,0 +1,45 @@
+{
+  "name": "sejmor",
+  "author": {
+    "name": "Michal Woloszyn",
+    "email": "fraunos@gmail.com"
+  },
+  "version": "1.0.0",
+  "description": "Service to grade polish politicians work in order to help voters make decision",
+  "main": "main.js",
+  "scripts": {
+    "build-css": "stylus source/stylesheets/index.styl -o static/css",
+    "watch-css": "stylus source/stylesheets/index.styl -o static/css -w",
+    "clean": "rm -rf static/css && mkdir -p static/css",
+    "build": "npm run clean && npm run build-css",
+    "watch": "nodemon main.js -e js,pug,styl",
+    "start": "node main"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^1.0.2",
+    "browserify": "^14.0.0",
+    "cheerio": "^0.22.0",
+    "koa": "^2.0.0-alpha.7",
+    "koa-bodyparser": "^3.2.0",
+    "koa-convert": "^1.2.0",
+    "koa-csrf": "^3.0.4",
+    "koa-favicon": "^1.2.1",
+    "koa-flash": "^1.0.0",
+    "koa-generic-session": "^1.11.4",
+    "koa-logger": "^1.3.0",
+    "koa-passport": "^3.0.0-rc.2",
+    "koa-pug": "^3.0.0-1",
+    "koa-router": "^7.0.0",
+    "koa-sslify": "^2.1.0",
+    "koa-static": "^2.0.0",
+    "koa-stylus": "0.0.3",
+    "nodemon": "^1.11.0",
+    "passport-facebook": "^2.1.1",
+    "passport-local": "^1.0.0",
+    "pg": "^6.1.2",
+    "pg-hstore": "^2.3.2",
+    "request": "^2.79.0",
+    "sequelize": "^3.30.0"
+  }
+}
