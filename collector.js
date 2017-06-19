@@ -1,64 +1,21 @@
 console.log('Uruchomiono collector.js');
 
-const co = require('co');
 const cheerio = require('cheerio');
 const request = require('request');
 // const database = require('./database');
 
 
-
-
-
 const base = 'http://www.sejm.gov.pl/Sejm8.nsf/page.xsp/przeglad_projust';
 
-let iterator = '';
-let nr;
+module.exports.test = test();
 
+async function test() {
+  let body = await getBodyP(base);
+  let projects = await getProjects(body);
+  return projects;
 
-co(function*() {
-  // nr = yield getLastEntryNr();
-  nr = {
-    Kadencji:0
-  };
+}
 
-
-  while (true) {
-    iterator = '';
-    console.log(nr);
-    let url = base + `agent.xsp?symbol=glosowania&NrKadencji=${nr.Kadencji}&NrPosiedzenia=${nr.Posiedzenia}&NrGlosowania=${nr.Glosowania}`;
-    let body = yield getBodyP(url);
-
-    let voting = getVotingData(body);
-    incrementCounter();
-
-    if (iterator != '') continue;
-
-    voting.nr = nr;
-    voting.source = url;
-
-    let links = getGroupLinks(body);
-    //console.log(links);
-    let linksP = links.map((link) => {
-      return getBodyP(link.source);
-    });
-
-    let deputies = [];
-
-    yield Promise.all(linksP).then(bodies => {
-      bodies.forEach((bode, index) => {
-        deputies.push(getDeputies(bode, links[index]['group']));
-        console.log(links[index]['group']);
-      });
-
-    });
-
-    voting.deputies = [].concat.apply([], deputies);
-    console.log(voting);
-  }
-
-
-  process.exit();
-});
 
 function getLastEntryNr() {
   return new Promise((resolve, reject) => {
@@ -113,6 +70,23 @@ function getBodyP(url) {
   });
 }
 
+function getProjects(body) {
+  let projects = [];
+  let $ = cheerio.load(body);
+  $('tbody').find('tr').each((it, ele) => {
+    let element = $(ele).find('td');
+        let project = {};
+        project.tytul = fixLetters(element.eq(1).find('div').eq(1).html().replace(/\n/g,''));
+        // project.status = cheerio.load(project.tytul).find('font').attr('color');
+        project.cos = element.eq(2).find('a').attr('href');
+        project.drukLink = element.eq(3).find('a').attr('href');
+        project.drukNr = parseInt(element.eq(3).find('a').text().replace(/\n/g,''));
+        project.komisje = fixLetters(element.eq(4).html());
+
+        projects.push(project);
+  });
+}
+
 function getVotingData(body) {
   let $ = cheerio.load(body);
   let voting = {};
@@ -127,10 +101,7 @@ function getVotingData(body) {
   console.log(voting.title);
   voting.date = parseDate($('#title_content small').html());
 
-
-
   return voting;
-
 }
 
 function getGroupLinks(body) {
