@@ -5,15 +5,18 @@ const request = require('request');
 // const database = require('./database');
 
 
-const base = 'http://www.sejm.gov.pl/Sejm8.nsf/page.xsp/przeglad_projust';
+const base = 'http://www.sejm.gov.pl';
 
-module.exports.test = test();
+module.exports = {
+  test: test
+}
 
 async function test() {
-  let body = await getBodyP(base);
+  let body = await getBodyP(base + '/Sejm8.nsf/page.xsp/przeglad_projust');
+  body = body;
   let projects = await getProjects(body);
+  // console.log(projects);
   return projects;
-
 }
 
 
@@ -64,9 +67,8 @@ function getBodyP(url) {
   return new Promise((resolve, reject) => {
     request(url, (err, response, body) => {
       if (err) reject(error);
-      else resolve(body);
+      else resolve(fixLetters(body));
     });
-
   });
 }
 
@@ -75,16 +77,33 @@ function getProjects(body) {
   let $ = cheerio.load(body);
   $('tbody').find('tr').each((it, ele) => {
     let element = $(ele).find('td');
-        let project = {};
-        project.tytul = fixLetters(element.eq(1).find('div').eq(1).html().replace(/\n/g,''));
-        // project.status = cheerio.load(project.tytul).find('font').attr('color');
-        project.cos = element.eq(2).find('a').attr('href');
-        project.drukLink = element.eq(3).find('a').attr('href');
-        project.drukNr = parseInt(element.eq(3).find('a').text().replace(/\n/g,''));
-        project.komisje = fixLetters(element.eq(4).html());
+    let project = {};
+    project.tresc = base + element.eq(1).find('a').attr('href');
 
-        projects.push(project);
+
+    if (element.eq(1).find('font').attr('color')=='green') {
+      project.status='przed III czytaniem';
+      project.tytul=element.eq(1).find('font').text();
+    }else if (element.eq(1).find('font').attr('color')=='#A0A0A0') {
+      project.tytul = element.eq(1).find('font').text();
+      project.status = 'odrzucony';
+    } else {
+      project.status = 'uchwalony';
+      project.tytul = element.find('div').eq(1).text();
+    }
+    project.tytul = project.tytul.replace(/\n/g, '');
+
+    //WEJDŹ W PRZEBIEG I ZCZYTAJ DANE OSTATNIEGO GŁOSOWANIA, CZYLI DECYDUJĄCEGO
+
+    // project.status = cheerio.load(project.tytul).find('font').attr('color');
+    project.tekst = element.eq(2).find('a').attr('href');
+    project.przebieg = base + element.eq(3).find('a').attr('href');
+    project.drukNr = parseInt(element.eq(3).find('a').text().replace(/\n/g, ''));
+    // project.komisje = element.eq(4).html();
+    project.votings=
+    projects.push(project);
   });
+  return projects;
 }
 
 function getVotingData(body) {
@@ -97,7 +116,7 @@ function getVotingData(body) {
     console.log('pusta strona!!!');
     return;
   }
-  voting.title = fixLetters(title);
+  voting.title = title;
   console.log(voting.title);
   voting.date = parseDate($('#title_content small').html());
 
@@ -137,8 +156,8 @@ function getDeputies(body, group) {
     for (var i = 1; i < 5; i += 3) {
       if (element.eq(i).html() != null) {
         let deputy = {};
-        deputy.name = fixLetters(element.eq(i).html());
-        deputy.vote = fixLetters(element.eq(i + 1).html());
+        deputy.name = element.eq(i).html();
+        deputy.vote = element.eq(i + 1).html();
         deputy.group = group;
         deputies.push(deputy);
       }

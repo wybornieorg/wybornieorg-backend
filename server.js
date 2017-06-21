@@ -2,9 +2,9 @@ console.log('Uruchomiono server.js');
 
 let collector = require('./collector');
 
-console.log(collector.test.then(() => {
-  console.log('finisz');
-}));
+collector.test().then((r) => {
+  console.log(r);
+});
 
 const Koa = require('koa')
 // const CSRF = require('koa-csrf').default
