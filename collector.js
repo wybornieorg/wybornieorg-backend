@@ -1,72 +1,58 @@
+// TODO: jeśli uchwalony lub odrzucony - pobierz wyniki decydujacego glosowania, jesli przed 3 czytaniem sprawdzaj codziennie o 16 czy byla zmiana statusu
+
+
 console.log('Uruchomiono collector.js');
 
 const cheerio = require('cheerio');
 const request = require('request');
+const co = require('co');
 // const database = require('./database');
-
 
 const base = 'http://www.sejm.gov.pl';
 
-module.exports = {
-  test: test
-}
-
-async function test() {
-  let body = await getBodyP(base + '/Sejm8.nsf/page.xsp/przeglad_projust');
-  body = body;
-  let projects = await getProjects(body);
-  // console.log(projects);
-  return projects;
-}
+// module.exports = {
+//   test: test
+// }
 
 
-function getLastEntryNr() {
-  return new Promise((resolve, reject) => {
-    console.log('getLastEntryNr');
-    database.Voting.find({}, {
-      'nr': 1
-    }).sort({
-      'nr.Glosowania': 1,
-      'nr.Posiedzenia': 1,
-      'nr.Kadencji': 1,
-    }).limit().exec((err, lastnr) => {
-      if (lastnr.length == 0) {
-        nr = {
-          Kadencji: 3,
-          Posiedzenia: 1,
-          Glosowania: 1,
-        };
-      } else {
-        nr = lastnr[0].nr;
-        database.Voting.findOne({
-          'nr.Kadencji': nr.Kadencji,
-          'nr.Posiedzenia': nr.Posiedzenia,
-          'nr.Glosowania': nr.Glosowania
-        }).remove().exec();
-      }
-      resolve(nr);
-    });
+co(function *(){
+  let body = yield getBodyP(base + '/Sejm8.nsf/page.xsp/przeglad_projust');
+  let projects = yield getProjects(body);
 
-  });
-}
+})
 
-function incrementCounter() {
-  if ('p' == iterator) {
-    nr.Posiedzenia++;
-    nr.Glosowania = 1;
-  } else if ('k' == iterator) {
-    nr.Kadencji++;
-    nr.Posiedzenia = 1;
-    nr.Glosowania = 1;
-  } else {
-    nr.Glosowania++;
+
+// async function test() {
+//   let body = await getBodyP(base + '/Sejm8.nsf/page.xsp/przeglad_projust');
+//   let projects = getProjects(body);
+//   // console.log(projects);
+//   return projects;
+// }
+
+class Project {
+  constructor({
+    tresc,
+    status,
+    tytul,
+    tekst,
+    przebieg,
+    drukNr,
+    votings
+  }) {
+    this.tresc = tresc;
+    this.status = status;
+    this.tytul = tytul;
+    this.tekst = tekst;
+    this.przebieg = przebieg;
+    this.drukNr = drukNr;
+    this.votings = votings;
   }
 }
 
 function getBodyP(url) {
   return new Promise((resolve, reject) => {
     request(url, (err, response, body) => {
-      if (err) reject(error);
+      if (err) reject(err);
       else resolve(fixLetters(body));
     });
   });
@@ -75,16 +61,17 @@ function getBodyP(url) {
 function getProjects(body) {
   let projects = [];
   let $ = cheerio.load(body);
+
   $('tbody').find('tr').each((it, ele) => {
     let element = $(ele).find('td');
     let project = {};
     project.tresc = base + element.eq(1).find('a').attr('href');
 
 
-    if (element.eq(1).find('font').attr('color')=='green') {
-      project.status='przed III czytaniem';
-      project.tytul=element.eq(1).find('font').text();
-    }else if (element.eq(1).find('font').attr('color')=='#A0A0A0') {
+    if (element.eq(1).find('font').attr('color') == 'green') {
+      project.status = 'przed III czytaniem';
+      project.tytul = element.eq(1).find('font').text();
+    } else if (element.eq(1).find('font').attr('color') == '#A0A0A0') {
       project.tytul = element.eq(1).find('font').text();
       project.status = 'odrzucony';
     } else {
@@ -93,29 +80,41 @@ function getProjects(body) {
     }
     project.tytul = project.tytul.replace(/\n/g, '');
 
-    //WEJDŹ W PRZEBIEG I ZCZYTAJ DANE OSTATNIEGO GŁOSOWANIA, CZYLI DECYDUJĄCEGO
+    //WEJDŹ W PRZEBIEG I ZCZYTAJ DANE OSTATNIEGO GŁOSOWANIA, CZYLI DECYDUJĄCEGO a.vote ostatniu
 
-    // project.status = cheerio.load(project.tytul).find('font').attr('color');
     project.tekst = element.eq(2).find('a').attr('href');
     project.przebieg = base + element.eq(3).find('a').attr('href');
     project.drukNr = parseInt(element.eq(3).find('a').text().replace(/\n/g, ''));
+
+    if (project.status != 'przed III czytaniem') {
+        // project.votings = getDecidingVotingData(project.przebieg);
+    }
+
     // project.komisje = element.eq(4).html();
-    project.votings=
-    projects.push(project);
+    console.log(project);
+    projects.push(new Project(project));
+
   });
   return projects;
+}
+
+async function getDecidingVotingData(link) {
+
+  let body = await getBodyP(link);
+  let $ = cheerio.load(body);
+
+  let lastVoting = $('a.vote').last().attr('href');
+
+  // let votingData = getVotingData(getBodyP(base + lastVoting));
+  console.log(base + '/' + lastVoting);
+  // console.log(body);
 }
 
 function getVotingData(body) {
   let $ = cheerio.load(body);
   let voting = {};
   let title = $('#contentBody').find('p').html();
-  if (title === null) {
-    if (nr.Glosowania == 1) iterator = 'k';
-    else iterator = 'p';
-    console.log('pusta strona!!!');
-    return;
-  }
+
   voting.title = title;
   console.log(voting.title);
   voting.date = parseDate($('#title_content small').html());
@@ -167,7 +166,6 @@ function getDeputies(body, group) {
   //});
   return deputies;
 }
-
 
 function parseDate(string) {
   let date = string.slice(5, 15);
