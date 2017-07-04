@@ -1,6 +1,5 @@
 // TODO: jeśli uchwalony lub odrzucony - pobierz wyniki decydujacego glosowania, jesli przed 3 czytaniem sprawdzaj codziennie o 16 czy byla zmiana statusu
 
-
 console.log('Uruchomiono collector.js');
 
 const cheerio = require('cheerio');
@@ -17,17 +16,19 @@ const base = 'http://www.sejm.gov.pl';
 
 co(function *(){
   let body = yield getBodyP(base + '/Sejm8.nsf/page.xsp/przeglad_projust');
-  let projects = yield getProjects(body);
-
+  let projects = getProjects(body);
+  for (project of projects) {
+    // console.log(project.status);
+    if (project.status != 'przed III czytaniem') {
+        project.votingLink = yield getDecidingVotingLink(project.przebieg);
+        project.votingData = getVotingData(yield getBodyP(project.votingLink));
+        console.log(project.przebieg);
+        console.log(project.votingLink);
+    }
+  }
+  console.log('klotz');
 })
 
-
-// async function test() {
-//   let body = await getBodyP(base + '/Sejm8.nsf/page.xsp/przeglad_projust');
-//   let projects = getProjects(body);
-//   // console.log(projects);
-//   return projects;
-// }
 
 class Project {
   constructor({
@@ -86,37 +87,30 @@ function getProjects(body) {
     project.przebieg = base + element.eq(3).find('a').attr('href');
     project.drukNr = parseInt(element.eq(3).find('a').text().replace(/\n/g, ''));
 
-    if (project.status != 'przed III czytaniem') {
-        // project.votings = getDecidingVotingData(project.przebieg);
-    }
-
     // project.komisje = element.eq(4).html();
-    console.log(project);
     projects.push(new Project(project));
 
   });
   return projects;
 }
 
-async function getDecidingVotingData(link) {
+async function getDecidingVotingLink(link) {
 
   let body = await getBodyP(link);
   let $ = cheerio.load(body);
 
-  let lastVoting = $('a.vote').last().attr('href');
+  let lastVotingLink = $('a.vote').last().attr('href');
 
-  // let votingData = getVotingData(getBodyP(base + lastVoting));
-  console.log(base + '/' + lastVoting);
-  // console.log(body);
+  return base + '/Sejm8.nsf/' + lastVotingLink;
 }
 
-function getVotingData(body) {
+async function getVotingData(body) {
   let $ = cheerio.load(body);
   let voting = {};
   let title = $('#contentBody').find('p').html();
 
   voting.title = title;
-  console.log(voting.title);
+  // console.log(voting.title);
   voting.date = parseDate($('#title_content small').html());
 
   return voting;
