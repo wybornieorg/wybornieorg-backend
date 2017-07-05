@@ -24,6 +24,10 @@ co(function *(){
         project.votingData = getVotingData(yield getBodyP(project.votingLink));
         console.log(project.przebieg);
         console.log(project.votingLink);
+        project.groupLinks = getGroupLinks(yield getBodyP(project.votingLink));
+        for (variable of project.groupLinks) {
+          console.log(getDeputies(yield getBodyP(variable.source),variable.group));
+        }
     }
   }
   console.log('klotz');
@@ -126,7 +130,7 @@ function getGroupLinks(body) {
   table.children().each((i, elem) => {
     //console.log(`rozpoczęcie ${i} iteracji pętli each na głosowaniu ${id}`);
     let currentGroup = $(elem).find('strong').html();
-    let link = base + $(elem).find('a').attr('href');
+    let link = base + '/Sejm8.nsf/' + $(elem).find('a').attr('href');
     links.push({
       'group': currentGroup,
       'source': link
