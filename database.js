@@ -30,11 +30,20 @@ sequelize
 // })
 
 const Project = sequelize.define('project', {
-  title: Sequelize.STRING,
+  "tresc": Sequelize.TEXT,
+  "status": Sequelize.STRING,
+  "tytul": Sequelize.STRING,
+  "tekst": Sequelize.STRING,
+  "przebieg": Sequelize.STRING,
+  "drukNr": Sequelize.INTEGER,
+  "votingLink": Sequelize.STRING,
+  "votingData": Sequelize.JSON,
+  "groupLinks": Sequelize.JSON,
+  "deputies": Sequelize.JSON,
 });
 
 var Voting = sequelize.define('Voting', {
-  name: Sequelize.STRING,
+  // name: Sequelize.STRING,
 });
 
 

@@ -8,6 +8,10 @@ const co = require('co');
 
 const db = require('./database.js');
 
+db.Project.sync({
+  force: true
+})
+
 var fs = require('fs');
 
 // const database = require('./database');
@@ -56,12 +60,7 @@ co(function*() {
 
       // console.log(project);
 
-      db.Project.sync({
-        force: true
-      }).then(() => {
-        // Table created
-        return Project.create(project);
-      });
+      db.Project.create(project);
 
       fs.writeFile("test/" + i++ + '.json', JSON.stringify(project), function(err) {
         if (err) {
@@ -156,7 +155,7 @@ function getVotingData(body) {
   let voting = {};
   let title = $('#contentBody').find('p').html();
 
-  voting.votingTitle = title;
+  voting.votingTitle = fixLetters(title);
   // console.log(voting.title);
   voting.votingDate = parseDate($('#title_content small').html());
 
