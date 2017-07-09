@@ -60,14 +60,7 @@ co(function*() {
 
       // console.log(project);
 
-      db.Project.create(project);
-
-      fs.writeFile("test/" + i++ + '.json', JSON.stringify(project), function(err) {
-        if (err) {
-          return console.log(err);
-        }
-        console.log("The file was saved!");
-      });
+      db.Project.findOrCreate(project);
 
       console.log();
     }
