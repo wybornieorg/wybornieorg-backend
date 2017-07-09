@@ -5,6 +5,8 @@ console.log('Uruchomiono collector.js');
 const cheerio = require('cheerio');
 const request = require('request');
 const co = require('co');
+var fs = require('fs');
+
 // const database = require('./database');
 
 const base = 'http://www.sejm.gov.pl';
@@ -14,21 +16,52 @@ const base = 'http://www.sejm.gov.pl';
 // }
 
 
-co(function *(){
+co(function*() {
   let body = yield getBodyP(base + '/Sejm8.nsf/page.xsp/przeglad_projust');
   let projects = getProjects(body);
+
+  i= 1;
   for (project of projects) {
     // console.log(project.status);
     if (project.status != 'przed III czytaniem') {
-        project.votingLink = yield getDecidingVotingLink(project.przebieg);
-        project.votingData = getVotingData(yield getBodyP(project.votingLink));
-        console.log(project.przebieg);
-        console.log(project.votingLink);
-        project.groupLinks = getGroupLinks(yield getBodyP(project.votingLink));
-        for (variable of project.groupLinks) {
-          console.log(getDeputies(yield getBodyP(variable.source),variable.group));
+      project.votingLink = getDecidingVotingLink(yield getBodyP(project.przebieg));
+      console.log(project.przebieg);
+      console.log(project.votingLink);
+      console.log('\n');
+
+      let votingBody = yield getBodyP(project.votingLink);
+
+
+      project.votingData = getVotingData(votingBody);
+      project.groupLinks = getGroupLinks(votingBody);
+
+      project.deputies = [];
+      for (variable of project.groupLinks) {
+        console.log(variable.source);
+        deputies = getDeputies(yield getBodyP(variable.source), variable.group);
+        project.deputies = project.deputies.concat(deputies);
+      }
+
+
+      console.log(project.deputies);
+
+      // console.log(project);
+      fs.writeFile("test/" + i +'.json', JSON.stringify(project.deputies), function(err) {
+        if (err) {
+          return console.log(err);
         }
+        console.log("The file was saved!");
+      });
+
+      fs.writeFile("test/" + i++ +'.html', JSON.stringify(votingBody), function(err) {
+        if (err) {
+          return console.log(err);
+        }
+        console.log("The file was saved!");
+      });
+      console.log('\n\n\n');
     }
+
   }
   console.log('klotz');
 })
@@ -98,9 +131,8 @@ function getProjects(body) {
   return projects;
 }
 
-async function getDecidingVotingLink(link) {
+function getDecidingVotingLink(body) {
 
-  let body = await getBodyP(link);
   let $ = cheerio.load(body);
 
   let lastVotingLink = $('a.vote').last().attr('href');
@@ -108,7 +140,7 @@ async function getDecidingVotingLink(link) {
   return base + '/Sejm8.nsf/' + lastVotingLink;
 }
 
-async function getVotingData(body) {
+function getVotingData(body) {
   let $ = cheerio.load(body);
   let voting = {};
   let title = $('#contentBody').find('p').html();
@@ -166,10 +198,11 @@ function getDeputies(body, group) {
 }
 
 function parseDate(string) {
-  let date = string.slice(5, 15);
-  let time = string.slice(27, 50);
+  // let date = string.slice(5, 15);
+  // let time = string.slice(27, 50);
 
-  return new Date(date.slice(6, 10), date.slice(3, 5), date.slice(0, 2), time.slice(0, 2), time.slice(3, 5), time.slice(6, 8));
+  // return new Date(date.slice(6, 10), date.slice(3, 5), date.slice(0, 2), time.slice(0, 2), time.slice(3, 5), time.slice(6, 8));
+  return string;
 }
 
 function fixLetters(string) {
