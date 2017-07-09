@@ -5,6 +5,9 @@ console.log('Uruchomiono collector.js');
 const cheerio = require('cheerio');
 const request = require('request');
 const co = require('co');
+
+const db = require('./database.js');
+
 var fs = require('fs');
 
 // const database = require('./database');
@@ -53,7 +56,12 @@ co(function*() {
 
       // console.log(project);
 
-
+      db.Project.sync({
+        force: true
+      }).then(() => {
+        // Table created
+        return Project.create(project);
+      });
 
       fs.writeFile("test/" + i++ + '.json', JSON.stringify(project), function(err) {
         if (err) {
