@@ -20,46 +20,49 @@ co(function*() {
   let body = yield getBodyP(base + '/Sejm8.nsf/page.xsp/przeglad_projust');
   let projects = getProjects(body);
 
-  i= 1;
+  i = 1;
   for (project of projects) {
     // console.log(project.status);
-    if (project.status != 'przed III czytaniem') {
-      project.votingLink = getDecidingVotingLink(yield getBodyP(project.przebieg));
-      console.log(project.przebieg);
-      console.log(project.votingLink);
+    voteData: if (project.status != 'przed III czytaniem') {
+
+      przebiegBody = yield getBodyP(project.przebieg);
+      if (przebiegBody.search(project.status) == -1) {
+
+        project.status1 = 'nieznany';
+        console.log(project.status);
+        console.log(project.przebieg);
+        break voteData;
+      }
+      project.votingLink = getDecidingVotingLink(przebiegBody);
       console.log('\n');
 
       let votingBody = yield getBodyP(project.votingLink);
-
 
       project.votingData = getVotingData(votingBody);
       project.groupLinks = getGroupLinks(votingBody);
 
       project.deputies = [];
       for (variable of project.groupLinks) {
-        console.log(variable.source);
+        // console.log(variable.source);
         deputies = getDeputies(yield getBodyP(variable.source), variable.group);
         project.deputies = project.deputies.concat(deputies);
       }
 
 
-      console.log(project.deputies);
+      // console.log(project.deputies);
 
       // console.log(project);
-      fs.writeFile("test/" + i +'.json', JSON.stringify(project.deputies), function(err) {
+
+
+
+      fs.writeFile("test/" + i++ + '.json', JSON.stringify(project), function(err) {
         if (err) {
           return console.log(err);
         }
         console.log("The file was saved!");
       });
 
-      fs.writeFile("test/" + i++ +'.html', JSON.stringify(votingBody), function(err) {
-        if (err) {
-          return console.log(err);
-        }
-        console.log("The file was saved!");
-      });
-      console.log('\n\n\n');
+      console.log();
     }
 
   }
@@ -91,7 +94,7 @@ function getBodyP(url) {
   return new Promise((resolve, reject) => {
     request(url, (err, response, body) => {
       if (err) reject(err);
-      else resolve(fixLetters(body));
+      else resolve(body);
     });
   });
 }
@@ -108,12 +111,12 @@ function getProjects(body) {
 
     if (element.eq(1).find('font').attr('color') == 'green') {
       project.status = 'przed III czytaniem';
-      project.tytul = element.eq(1).find('font').text();
+      project.tytul = fixLetters(element.eq(1).find('font').text());
     } else if (element.eq(1).find('font').attr('color') == '#A0A0A0') {
       project.tytul = element.eq(1).find('font').text();
       project.status = 'odrzucony';
     } else {
-      project.status = 'uchwalony';
+      project.status = 'uchwalono';
       project.tytul = element.find('div').eq(1).text();
     }
     project.tytul = project.tytul.replace(/\n/g, '');
@@ -145,9 +148,9 @@ function getVotingData(body) {
   let voting = {};
   let title = $('#contentBody').find('p').html();
 
-  voting.title = title;
+  voting.votingTitle = title;
   // console.log(voting.title);
-  voting.date = parseDate($('#title_content small').html());
+  voting.votingDate = parseDate($('#title_content small').html());
 
   return voting;
 }
@@ -176,17 +179,15 @@ function getGroupLinks(body) {
 function getDeputies(body, group) {
   //return new Promise((resolve,reject)=>{
   let deputies = [];
-
   let $ = cheerio.load(body);
-
 
   $('tbody').find('tr').each((it, ele) => {
     let element = $(ele).find('td');
     for (var i = 1; i < 5; i += 3) {
       if (element.eq(i).html() != null) {
         let deputy = {};
-        deputy.name = element.eq(i).html();
-        deputy.vote = element.eq(i + 1).html();
+        deputy.name = fixLetters(element.eq(i).html());
+        deputy.vote = fixLetters(element.eq(i + 1).html());
         deputy.group = group;
         deputies.push(deputy);
       }
@@ -200,6 +201,9 @@ function getDeputies(body, group) {
 function parseDate(string) {
   // let date = string.slice(5, 15);
   // let time = string.slice(27, 50);
+  // console.log(date);
+  // console.log(time);
+
 
   // return new Date(date.slice(6, 10), date.slice(3, 5), date.slice(0, 2), time.slice(0, 2), time.slice(3, 5), time.slice(6, 8));
   return string;
