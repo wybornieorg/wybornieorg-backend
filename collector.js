@@ -9,10 +9,8 @@ const co = require('co');
 const db = require('./database.js');
 
 db.Project.sync({
-  force: true
+  // force: true
 })
-
-var fs = require('fs');
 
 // const database = require('./database');
 
@@ -27,19 +25,33 @@ co(function*() {
   let body = yield getBodyP(base + '/Sejm8.nsf/page.xsp/przeglad_projust');
   let projects = getProjects(body);
 
-  i = 1;
+  console.log(projects);
+
   for (project of projects) {
+    // TODO: sprawić, żeby program sprawdzał prawidłowo status projektu
+    przebiegBody = yield getBodyP(project.przebieg);
+    if (przebiegBody.search(project.status) == -1) {
+
+      project.status1 = 'nieznany';
+      console.log(project.status1);
+      console.log(project.status);
+      console.log(project.przebieg);
+      continue;
+    }
+
+    test = yield db.Project.findOne({
+      where: {
+        drukNr: project.drukNr
+      }
+    });
+    console.log(test);
+    if (test != null) {continue;}
+
+
     // console.log(project.status);
     voteData: if (project.status != 'przed III czytaniem') {
 
-      przebiegBody = yield getBodyP(project.przebieg);
-      if (przebiegBody.search(project.status) == -1) {
 
-        project.status1 = 'nieznany';
-        console.log(project.status);
-        console.log(project.przebieg);
-        break voteData;
-      }
       project.votingLink = getDecidingVotingLink(przebiegBody);
       console.log('\n');
 
@@ -60,7 +72,12 @@ co(function*() {
 
       // console.log(project);
 
-      db.Project.findOrCreate(project);
+      db.Project.findOrCreate({
+        where: {
+          drukNr: project.drukNr
+        },
+        defaults: project
+      });
 
       console.log();
     }

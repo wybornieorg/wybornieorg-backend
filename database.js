@@ -30,9 +30,9 @@ sequelize
 // })
 
 const Project = sequelize.define('project', {
-  "tresc": Sequelize.TEXT,
   "status": Sequelize.STRING,
-  "tytul": Sequelize.STRING,
+  "tytul": Sequelize.TEXT,
+  "tresc": Sequelize.TEXT,
   "tekst": Sequelize.STRING,
   "przebieg": Sequelize.STRING,
   "drukNr": Sequelize.INTEGER,
