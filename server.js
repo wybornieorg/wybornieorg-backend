@@ -1,7 +1,5 @@
 console.log('Uruchomiono server.js');
 
-
-
 const Koa = require('koa')
 // const CSRF = require('koa-csrf').default
 // const flash = require('koa-flash')
@@ -36,9 +34,9 @@ if (blog.length != 0) {
 }
 
 
-router.get('/', function(ctx) {
+router.get('/', async(ctx) => {
   ctx.type = 'html'
-  body = fs.readFileSync('views/blog.html', 'utf8')
+  let body = fs.readFileSync('views/blog.html', 'utf8')
   ctx.body = body.replace('{blog}', blogbody)
 })
 
@@ -46,8 +44,48 @@ const db = require('./database.js');
 
 router.get('/dev', async(ctx) => {
   ctx.type = 'html'
-  ctx.body = await db.Project.findAll({attributes: {exclude: ['deputies']}})
+  ctx.body = await db.Project.findAll({
+    attributes: {
+      exclude: ['deputies']
+    }
+  })
 })
+
+router.get('/projekt', async(ctx) => {
+  ctx.type = 'html'
+  let body = '';
+  let projects = await db.Project
+    .findAndCountAll({
+      attributes: ['id', 'drukNr']
+    })
+  body += `<p>${projects.count} projektów</p>`
+
+  for (variable of projects.rows) {
+    body += `<a href="/projekt/${variable.drukNr}">${variable.drukNr}</a><br>`
+  }
+
+  ctx.body = body;
+
+})
+
+router.get('/projekt/:druk', async(ctx) => {
+
+  ctx.type = 'html'
+  let body = ''
+
+  project = (await db.Project.findOne({
+    where: {
+      drukNr: ctx.params.druk
+    }
+  })).get()
+  for (variable in project) {
+    body += `${variable}: ${JSON.stringify(project[variable])}<br>`;
+  }
+  ctx.body = body;
+
+});
+
+
 
 // start server
 const port = process.env.PORT || 3000

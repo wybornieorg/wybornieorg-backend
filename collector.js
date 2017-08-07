@@ -12,7 +12,6 @@ db.Project.sync({
   // force: true
 })
 
-// const database = require('./database');
 
 const base = 'http://www.sejm.gov.pl';
 
@@ -25,17 +24,14 @@ co(function*() {
   let body = yield getBodyP(base + '/Sejm8.nsf/page.xsp/przeglad_projust');
   let projects = getProjects(body);
 
-  console.log(projects);
+  // console.log(projects);
 
   for (project of projects) {
     // TODO: sprawić, żeby program sprawdzał prawidłowo status projektu
     przebiegBody = yield getBodyP(project.przebieg);
-    if (przebiegBody.search(project.status) == -1) {
+    if (przebiegBody.search(project.status) === -1) {
 
       project.status1 = 'nieznany';
-      console.log(project.status1);
-      console.log(project.status);
-      console.log(project.przebieg);
       continue;
     }
 
@@ -44,7 +40,7 @@ co(function*() {
         drukNr: project.drukNr
       }
     });
-    console.log(test);
+    // console.log(test);
     if (test != null) {continue;}
 
 
@@ -53,7 +49,7 @@ co(function*() {
 
 
       project.votingLink = getDecidingVotingLink(przebiegBody);
-      console.log('\n');
+      // console.log('\n');
 
       let votingBody = yield getBodyP(project.votingLink);
 
