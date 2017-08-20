@@ -1,26 +1,21 @@
  @import url('https://fonts.googleapis.com/css?family=Spectral');
 body {
-  margin: 5% 10%;
   font-family: Spectral;
-  text-align: justify;
 }
+#projectList{
+  max-width: 30%;
 
-.wrap > *{
-  display:block;
-  float: right;
 }
-article{
-  padding: 5% 10%;
+li{
+      list-style-type: none;
 }
-
-.side{
-  width: 30%;
-  background-color: #eef;
+#currentProject{
+  max-width: 70%;
+  background-color: lightgrey;
 }
-.side > p{
-  padding: 5%;
+#app{
+  display: flex;
 }
-
-.blog{
-  width: 70%;
+.uchwalono{
+  color: green;
 }
