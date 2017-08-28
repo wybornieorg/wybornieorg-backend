@@ -17,10 +17,8 @@ const app = new Koa()
 const fs = require('fs')
 const router = require('koa-router')()
 
-
-
 app.use(async (ctx,next) => {
-  ctx.response.set('Access-Control-Allow-Origin', 'http://localhost:8080');
+  ctx.response.set('Access-Control-Allow-Origin', '*');
   ctx.response.set('Access-Control-Allow-Methods', 'GET');
   ctx.response.set('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
   ctx.response.set('Access-Control-Allow-Credentials', true);
@@ -53,9 +51,7 @@ const db = require('./database.js');
 router.get('/dev/projekty', async(ctx) => {
   ctx.type = 'html'
   ctx.body = await db.Project.findAll({
-    attributes: {
-      exclude: ['deputies']
-    }
+    attributes: ['drukNr', 'tytul']
   })
   console.log(ctx);
 })
