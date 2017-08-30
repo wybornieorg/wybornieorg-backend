@@ -4,3 +4,7 @@ Odpowiada za trzy zadania:
 - collector.js - pobieranie danych z sejm.gov.pl
 - database.js - przechowywanie danych
 - server.js - udostępnianie zasobów w sieci w formie REST API
+
+REST:
+http://wybornie.org:3000/dev/projekty
+http://wybornie.org:3000/dev/projekty/:nrDruku np. http://wybornie.org:3000/dev/projekty/1677
