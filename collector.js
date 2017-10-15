@@ -9,7 +9,8 @@ const co = require('co');
 const db = require('./database.js');
 
 db.Project.sync({
-  // force: true
+  // force - czyść tabelę / dev mode
+  force: true
 })
 
 
