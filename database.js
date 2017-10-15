@@ -36,6 +36,7 @@ const Project = sequelize.define('project', {
   "tekst": Sequelize.STRING,
   "przebieg": Sequelize.STRING,
   "drukNr": Sequelize.INTEGER,
+  "frekwencja": Sequelize.FLOAT,
   "votingLink": Sequelize.STRING,
   "votingData": Sequelize.JSON,
   "groupLinks": Sequelize.JSON,

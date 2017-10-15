@@ -63,7 +63,9 @@ co(function*() {
         project.deputies = project.deputies.concat(deputies);
       }
 
+      project.frekwencja = 1 - project.deputies.filter((value) => { return value.vote === 'Nieobecny' }).length / project.deputies.length
 
+      console.log(project.frekwencja);
       // console.log(project.deputies);
 
       // console.log(project);
