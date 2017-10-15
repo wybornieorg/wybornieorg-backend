@@ -8,3 +8,9 @@ Odpowiada za trzy zadania:
 REST:
 http://wybornie.org:3000/dev/projekty
 http://wybornie.org:3000/dev/projekty/:nrDruku np. http://wybornie.org:3000/dev/projekty/1677
+
+TODO:
+- [ ] powtarzanie sprawdzania/pobierania danych z sejm.gov.pl codziennie
+- [ ] selekcja pozytywna - konta dla kandydatów na posłów, by umożliwić zapoznanie się z poglądami ludzi poza parlamentem
+- [ ] pobieranie kadencji 7
+- [x] link do druku PDF
