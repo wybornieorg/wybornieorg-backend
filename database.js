@@ -32,9 +32,10 @@ sequelize
 const Project = sequelize.define('project', {
   "status": Sequelize.STRING,
   "tytul": Sequelize.TEXT,
-  "tresc": Sequelize.TEXT,
-  "tekst": Sequelize.STRING,
-  "przebieg": Sequelize.STRING,
+  "trescLink": Sequelize.STRING,
+  "drukPdfLink": Sequelize.JSON,
+  "isapLink": Sequelize.STRING,
+  "przebiegLink": Sequelize.STRING,
   "drukNr": Sequelize.INTEGER,
   "frekwencja": Sequelize.FLOAT,
   "votingLink": Sequelize.STRING,

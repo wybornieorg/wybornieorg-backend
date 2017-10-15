@@ -28,7 +28,7 @@ co(function*() {
 
   for (project of projects) {
     // TODO: sprawić, żeby program sprawdzał prawidłowo status projektu
-    przebiegBody = yield getBodyP(project.przebieg);
+    przebiegBody = yield getBodyP(project.przebiegLink);
     if (przebiegBody.search(project.status) === -1) {
 
       project.status1 = 'nieznany';
@@ -46,6 +46,8 @@ co(function*() {
 
     // console.log(project.status);
     voteData: if (project.status != 'przed III czytaniem') {
+      project.drukPdfLink = scrapeDrukPdfLink(yield getBodyP(project.trescLink))
+
 
 
       project.votingLink = getDecidingVotingLink(przebiegBody);
@@ -121,7 +123,7 @@ function getProjects(body) {
   $('tbody').find('tr').each((it, ele) => {
     let element = $(ele).find('td');
     let project = {};
-    project.tresc = base + element.eq(1).find('a').attr('href');
+    project.trescLink = base + element.eq(1).find('a').attr('href');
 
 
     if (element.eq(1).find('font').attr('color') == 'green') {
@@ -138,19 +140,24 @@ function getProjects(body) {
 
     //WEJDŹ W PRZEBIEG I ZCZYTAJ DANE OSTATNIEGO GŁOSOWANIA, CZYLI DECYDUJĄCEGO a.vote ostatniu
 
-    project.tekst = element.eq(2).find('a').attr('href');
-    project.przebieg = base + element.eq(3).find('a').attr('href');
+    project.isapLink = element.eq(2).find('a').attr('href');
+    project.przebiegLink = base + element.eq(3).find('a').attr('href');
     project.drukNr = parseInt(element.eq(3).find('a').text().replace(/\n/g, ''));
 
     // project.komisje = element.eq(4).html();
-    projects.push(new Project(project));
+    projects.push(project);
 
   });
   return projects;
 }
 
-function getDecidingVotingLink(body) {
+function scrapeDrukPdfLink(body) {
+  let $ = cheerio.load(body);
 
+  return $('a.pdf').attr('href');
+}
+
+function getDecidingVotingLink(body) {
   let $ = cheerio.load(body);
 
   let lastVotingLink = $('a.vote').last().attr('href');
