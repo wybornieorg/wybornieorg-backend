@@ -3,7 +3,7 @@ console.log('Uruchomiono database.js');
 
 const Sequelize = require('sequelize')
 
-var sequelize = new Sequelize('sejmortestdb', 'alarm', '', {
+var sequelize = new Sequelize('sejmortestdb', 'postgres', '', {
   host: 'localhost',
   dialect: 'postgres',
   timestamps: true,
