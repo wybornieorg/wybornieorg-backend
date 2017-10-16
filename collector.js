@@ -19,7 +19,7 @@ const base = 'http://www.sejm.gov.pl';
 // module.exports = {
 //   test: test
 // }
-
+// var globalDeputies = new Set()
 
 co(function*() {
   let body = yield getBodyP(base + '/Sejm8.nsf/page.xsp/przeglad_projust');
@@ -88,26 +88,26 @@ co(function*() {
   console.log('klotz');
 })
 
-
-class Project {
-  constructor({
-    tresc,
-    status,
-    tytul,
-    tekst,
-    przebieg,
-    drukNr,
-    votings
-  }) {
-    this.tresc = tresc;
-    this.status = status;
-    this.tytul = tytul;
-    this.tekst = tekst;
-    this.przebieg = przebieg;
-    this.drukNr = drukNr;
-    this.votings = votings;
-  }
-}
+// NOTE: Co daje ta klasa? attendance i tak jest zapisywane, pomimo, że brak tej zmiennej w konstruktorze
+// class Project {
+//   constructor({
+//     tresc,
+//     status,
+//     tytul,
+//     isap,
+//     przebieg,
+//     drukNr,
+//     votings
+//   }) {
+//     this.tresc = tresc;
+//     this.status = status;
+//     this.tytul = tytul;
+//     this.isap = isap;
+//     this.przebieg = przebieg;
+//     this.drukNr = drukNr;
+//     this.votings = votings;
+//   }
+// }
 
 function getBodyP(url) {
   return new Promise((resolve, reject) => {
@@ -219,24 +219,27 @@ function getDeputies(body, group) {
         deputy.name = fixLetters(element.eq(i).html());
         deputy.vote = fixLetters(element.eq(i + 1).html());
         deputy.group = group;
+        // db.Project.findOrCreate({
+        //   where: {
+        //     drukNr: project.drukNr
+        //   },
+        //   defaults: project
+        // });
         deputies.push(deputy);
       }
     }
   });
   //resolve(deputies);
   //});
+  // console.log(globalDeputies)
   return deputies;
 }
 
 function parseDate(string) {
-  // let date = string.slice(5, 15);
-  // let time = string.slice(27, 50);
-  // console.log(date);
-  // console.log(time);
+  let date = string.slice(5, 15);
+  let time = string.slice(27, 50);
 
-
-  // return new Date(date.slice(6, 10), date.slice(3, 5), date.slice(0, 2), time.slice(0, 2), time.slice(3, 5), time.slice(6, 8));
-  return string;
+  return new Date(date.slice(6, 10), parseInt(date.slice(3, 5))-1, date.slice(0, 2), time.slice(0, 2), time.slice(3, 5), time.slice(6, 8));
 }
 
 function fixLetters(string) {
