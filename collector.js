@@ -52,6 +52,7 @@ co(function*() {
 
 
       project.votingLink = getDecidingVotingLink(przebiegBody);
+      project.opis = getVotingDescription(przebiegBody);
       // console.log('\n');
 
       let votingBody = yield getBodyP(project.votingLink);
@@ -166,10 +167,16 @@ function getDecidingVotingLink(body) {
   return base + '/Sejm8.nsf/' + lastVotingLink;
 }
 
+function getVotingDescription(body) {
+  let $ = cheerio.load(body);
+
+  return $('div.left p').text();
+}
+
 function getVotingData(body) {
   let $ = cheerio.load(body);
   let voting = {};
-  let title = $('#contentBody').find('p').html();
+  let title = $('#contentBody').find('p.subbig').eq(0).text();
 
   voting.votingTitle = fixLetters(title);
   // console.log(voting.title);
