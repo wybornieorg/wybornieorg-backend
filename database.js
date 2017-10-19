@@ -7,6 +7,7 @@ var sequelize = new Sequelize('sejmortestdb', 'postgres', '', {
   host: 'localhost',
   dialect: 'postgres',
   timestamps: true,
+  logging: false,
 
   pool: {
     max: 5,
@@ -38,9 +39,10 @@ const Project = sequelize.define('project', {
   "isapLink": Sequelize.STRING,
   "przebiegLink": Sequelize.STRING,
   "drukNr": Sequelize.INTEGER,
+  "kadencja": Sequelize.INTEGER,
   "frekwencja": Sequelize.FLOAT,
   "votingLink": Sequelize.STRING,
-  "votingData": Sequelize.JSON,
+  "votingDate": Sequelize.JSON,
   "groupLinks": Sequelize.JSON,
   "deputies": Sequelize.JSON,
 });

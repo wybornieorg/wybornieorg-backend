@@ -5,8 +5,12 @@ console.log('Uruchomiono collector.js');
 const cheerio = require('cheerio');
 const request = require('request');
 const co = require('co');
+const Buffer = require('buffer').Buffer;
+const Iconv = require('iconv').Iconv;
 
 const db = require('./database.js');
+
+const iconv = new Iconv('ISO-8859-2', 'UTF-8');
 
 db.Project.sync({
   // force - czyść tabelę / dev mode
@@ -16,69 +20,124 @@ db.Project.sync({
 
 const base = 'http://www.sejm.gov.pl';
 
+const kadencjeLinki = [{
+    nrKadencji: 8,
+    link: 'http://orka.sejm.gov.pl/projustall8.htm'
+  },
+  {
+    nrKadencji: 7,
+    link: 'http://orka.sejm.gov.pl/projustall7.htm'
+  },
+  {
+    nrKadencji: 6,
+    link: 'http://orka.sejm.gov.pl/projustall6.htm'
+  },
+  {
+    nrKadencji: 5,
+    link: 'http://www.sejm.gov.pl/archiwum/prace/kadencja5/projustall5.htm'
+  },
+  {
+    nrKadencji: 4,
+    link: 'http://www.sejm.gov.pl/archiwum/prace/kadencja4/projustall4.htm'
+  },
+  {
+    nrKadencji: 3,
+    link: 'http://www.sejm.gov.pl/archiwum/prace/kadencja3/projust_all3.htm'
+  },
+];
 // module.exports = {
 //   test: test
 // }
 // var globalDeputies = new Set()
 
 co(function*() {
-  let body = yield getBodyP(base + '/Sejm8.nsf/page.xsp/przeglad_projust');
-  let projects = getProjects(body);
+  let projects = [];
 
-  // console.log(projects);
+  for (kadencja of kadencjeLinki) {
+    projects = projects.concat(getProjects(yield getBodyP(kadencja.link), kadencja.nrKadencji));
+  }
+  console.log(projects);
 
-  for (project of projects) {
-    // TODO: sprawić, żeby program sprawdzał prawidłowo status projektu
-    przebiegBody = yield getBodyP(project.przebiegLink);
-    if (przebiegBody.search(project.status) === -1) {
-
-      project.status1 = 'nieznany';
-      continue;
-    }
-
+  for (project of projects.reverse()) {
     test = yield db.Project.findOne({
       where: {
         drukNr: project.drukNr
       }
     });
     // console.log(test);
-    if (test != null) {continue;}
+    if (test != null) {
+      continue;
+    }
 
 
+    // if (przebiegBody.search(project.status) === -1) {
+    //
+    //   project.status1 = 'nieznany';
+    //   continue;
+    // }
     // console.log(project.status);
-    voteData: if (project.status != 'przed III czytaniem') {
-      project.drukPdfLink = scrapeDrukPdfLink(yield getBodyP(project.trescLink))
+    voteData: {
+      console.log(`Zbieranie danych o projekcie drukNr: ${project.drukNr}`);
+      console.log();
+      console.log(project);
 
+      console.log(`Pobieranie drukPdfLink z ${project.trescLink}`);
+      if (project.kadencja > 4) {
+        project.drukPdfLink = scrapeDrukPdfLink(yield getBodyP(project.trescLink), project.kadencja)
+      } else {
+        project.drukPdfLink = project.trescLink
+      }
+      console.log(`Pobieranie przebiegBody z ${project.przebiegLink}`);
 
+      przebiegBody = yield getBodyP(project.przebiegLink);
 
-      project.votingLink = getDecidingVotingLink(przebiegBody);
-      project.opis = getVotingDescription(przebiegBody);
-      // console.log('\n');
+      console.log(`Pobieranie opis z przebiegBody`);
+      project.opis = getVotingDescription(przebiegBody, project.kadencja);
+      console.log(project.opis);
 
+      console.log(`Pobieranie votingLink z przebiegBody`);
+      project.votingLink = getDecidingVotingLink(przebiegBody, project.kadencja);
+      console.log(project.votingLink);
+      if (project.votingLink === undefined) {
+        continue;
+      }
+
+      console.log(`Pobieranie votingBody z ${project.votingLink}`);
       let votingBody = yield getBodyP(project.votingLink);
 
-      project.votingData = getVotingData(votingBody);
-      project.groupLinks = getGroupLinks(votingBody);
+      console.log(`Pobieranie votingDate z votingBody`);
+      project.votingDate = getVotingDate(votingBody, project.kadencja);
+      console.log(project.votingDate);
+
+      console.log(`Pobieranie groupLinks z votingBody`);
+      project.groupLinks = getGroupLinks(votingBody, project.kadencja);
+      console.log(project.groupLinks);
 
       project.deputies = [];
       for (variable of project.groupLinks) {
         // console.log(variable.source);
-        deputies = getDeputies(yield getBodyP(variable.source), variable.group);
+        deputies = getDeputies(yield getBodyP(variable.source), variable.group, project.kadencja);
         project.deputies = project.deputies.concat(deputies);
       }
 
-      project.frekwencja = 1 - project.deputies.filter((value) => { return value.vote === 'Nieobecny' }).length / project.deputies.length
+      console.log(project.deputies);
+
+      project.frekwencja = 1 - project.deputies.filter((value) => {
+        return value.vote === 'Nieobecny'
+      }).length / project.deputies.length
 
       console.log(project.frekwencja);
-      // console.log(project.deputies);
+
 
       // console.log(project);
-
+      console.log(project);
       db.Project.findOrCreate({
         where: {
           drukNr: project.drukNr
         },
         defaults: project
+      }).then((result) => {
+        console.log(`Zapisano w bazie danych drukNr: ${result[0].drukNr}`);
       });
 
       console.log();
@@ -111,91 +170,153 @@ co(function*() {
 
 function getBodyP(url) {
   return new Promise((resolve, reject) => {
-    request(url, (err, response, body) => {
+    request({
+      url: url,
+      encoding: null
+    }, (err, response, body) => {
       if (err) reject(err);
-      else resolve(body);
+      else {
+        resolve(iconv.convert(body));
+      }
     });
   });
 }
 
-function getProjects(body) {
+function getProjects(body, kadencja) {
+  console.log(kadencja);
   let projects = [];
   let $ = cheerio.load(body);
 
-  $('tbody').find('tr').each((it, ele) => {
+  // throw true;
+  let dataTable = $('table').find('tbody').find('tr');
+
+  dataTable.each((it, ele) => {
     let element = $(ele).find('td');
     let project = {};
-    project.trescLink = base + element.eq(1).find('a').attr('href');
 
+    project.drukNr = parseInt(element.eq(3).find('a').text().replace(/\n/g, ''));
+    // console.log(project.drukNr);
+    if (isNaN(project.drukNr)) {
+      return;
+    }
 
     if (element.eq(1).find('font').attr('color') == 'green') {
       project.status = 'przed III czytaniem';
-      project.tytul = fixLetters(element.eq(1).find('font').text());
-    } else if (element.eq(1).find('font').attr('color') == '#A0A0A0') {
+      project.tytul = element.eq(1).find('font').text();
+      return;
+    } else if (['#A0A0A0', '#C0C0C0'].indexOf(element.eq(1).find('font').attr('color')) !== -1) {
       project.tytul = element.eq(1).find('font').text();
       project.status = 'odrzucony';
     } else {
       project.status = 'uchwalono';
-      project.tytul = element.find('div').eq(1).text();
+      project.tytul = element.eq(1).text().replace('Treść projektu', '');
     }
-    project.tytul = project.tytul.replace(/\n/g, '');
+    project.tytul = project.tytul.replace(/\n/g, '').trim();
+
+    project.trescLink = element.eq(1).find('a').attr('href');
+    project.kadencja = kadencja;
 
     //WEJDŹ W PRZEBIEG I ZCZYTAJ DANE OSTATNIEGO GŁOSOWANIA, CZYLI DECYDUJĄCEGO a.vote ostatniu
 
     project.isapLink = element.eq(2).find('a').attr('href');
-    project.przebiegLink = base + element.eq(3).find('a').attr('href');
-    project.drukNr = parseInt(element.eq(3).find('a').text().replace(/\n/g, ''));
+    project.przebiegLink = function(link) {
+      if (link.indexOf('http') === -1) {
+        link = base + link;
+      }
+      return link;
+    }(element.eq(3).find('a').attr('href'));
+
 
     // project.komisje = element.eq(4).html();
+    console.log(project);
     projects.push(project);
 
   });
   return projects;
 }
 
-function scrapeDrukPdfLink(body) {
+function scrapeDrukPdfLink(body, kadencja) {
   let $ = cheerio.load(body);
 
-  return $('a.pdf').attr('href');
+  let temp = $('a').filter((index, element) => {
+    return $(element).text().search('.pdf') !== -1;
+  }).first().attr('href');
+
+  if (kadencja === 5 || kadencja === 6) {
+    temp = 'http://orka.sejm.gov.pl' + temp;
+  }
+  return temp;
 }
 
-function getDecidingVotingLink(body) {
+function getDecidingVotingLink(body, kadencja) {
   let $ = cheerio.load(body);
+  let lastVotingLink;
+  console.log(kadencja);
 
-  let lastVotingLink = $('a.vote').last().attr('href');
+  if (kadencja > 6) {
+    lastVotingLink = base + `/Sejm${kadencja}.nsf/` + $('a.vote').last().attr('href');
 
-  return base + '/Sejm8.nsf/' + lastVotingLink;
+  } else {
+    lastVotingLink = $('a').filter((index, element) => {
+      return $(element).text().search('głos') !== -1;
+    }).last().attr('href');
+  }
+  return lastVotingLink;
 }
 
-function getVotingDescription(body) {
+function getVotingDescription(body, kadencja) {
   let $ = cheerio.load(body);
-
-  return $('div.left p').text();
+  let votingDescription;
+  if (kadencja > 6) {
+    votingDescription = $('div.left p').text();
+  } else {
+    votingDescription = $('tr').eq(8).text().replace(/\n/g, '').trim();
+  }
+  return votingDescription;
 }
 
-function getVotingData(body) {
+function getVotingDate(body, kadencja) {
   let $ = cheerio.load(body);
-  let voting = {};
-  let title = $('#contentBody').find('p.subbig').eq(0).text();
+  let votingDate;
 
-  voting.votingTitle = fixLetters(title);
-  // console.log(voting.title);
-  voting.votingDate = parseDate($('#title_content small').html());
+  if (kadencja > 6) {
+    votingDate = $('#title_content small').text();
+  } else {
+    votingDate = $('td').text();
+  }
+  votingDay = votingDate.match(/[0-9]{2}-[0-9]{2}-[0-9]{4}/).toString();
+  votingHour = votingDate.match(/[0-9]{2}:[0-9]{2}/).toString();
 
-  return voting;
+  votingDate = votingDay.split('-').concat(votingHour.split(':'))
+  votingDate = new Date(votingDate[2], votingDate[1], votingDate[0], votingDate[3], votingDate[4])
+  return votingDate;
 }
 
-function getGroupLinks(body) {
+function getGroupLinks(body, kadencja) {
   let $ = cheerio.load(body);
 
-  var table = $('tbody');
+  var table;
+  if (kadencja > 3 && kadencja < 7) {
+    table = $('tbody').eq(-2);
+  } else {
+    table = $('tbody').eq(-1);
+  }
+
+  if (kadencja < 7) {
+    table.children().eq(0).remove();
+  }
+
   let links = [];
 
-
   table.children().each((i, elem) => {
-    //console.log(`rozpoczęcie ${i} iteracji pętli each na głosowaniu ${id}`);
-    let currentGroup = $(elem).find('strong').html();
-    let link = base + '/Sejm8.nsf/' + $(elem).find('a').attr('href');
+    let currentGroup = $(elem).find('a').first().text();
+    let link = $(elem).find('a').attr('href');
+    if (kadencja > 6) {
+      link = base + `/Sejm${kadencja}.nsf/` + link;
+    } else {
+      link = link.replace('.', 'http://orka.sejm.gov.pl/SQL.nsf');
+    }
+
     links.push({
       'group': currentGroup,
       'source': link
@@ -206,40 +327,43 @@ function getGroupLinks(body) {
 
 }
 
-function getDeputies(body, group) {
-  //return new Promise((resolve,reject)=>{
-  let deputies = [];
+function getDeputies(body, group, kadencja) {
   let $ = cheerio.load(body);
+  let deputies = [];
 
-  $('tbody').find('tr').each((it, ele) => {
-    let element = $(ele).find('td');
-    for (var i = 1; i < 5; i += 3) {
-      if (element.eq(i).html() != null) {
-        let deputy = {};
-        deputy.name = fixLetters(element.eq(i).html());
-        deputy.vote = fixLetters(element.eq(i + 1).html());
-        deputy.group = group;
-        // db.Project.findOrCreate({
-        //   where: {
-        //     drukNr: project.drukNr
-        //   },
-        //   defaults: project
-        // });
-        deputies.push(deputy);
+  if (kadencja > 6) {
+    $('tbody').find('tr').each((it, ele) => {
+      let element = $(ele).find('td');
+      for (var i = 1; i < 5; i += 3) {
+        if (element.eq(i).html() != null) {
+          let deputy = {};
+          deputy.name = fixLetters(element.eq(i).html());
+          deputy.vote = fixLetters(element.eq(i + 1).html());
+          deputy.group = group;
+          deputies.push(deputy);
+        }
       }
-    }
-  });
-  //resolve(deputies);
-  //});
-  // console.log(globalDeputies)
+    });
+  } else {
+    $('tbody').find('tr').each((it, ele) => {
+      if (it < 7) {
+        return;
+      }
+
+      let element = $(ele).find('td');
+      for (var i = 0; i < 3; i += 2) {
+        if (element.eq(i).text() !== "") {
+          let deputy = {};
+          deputy.name = fixLetters(element.eq(i).text());
+          deputy.vote = fixLetters(element.eq(i + 1).text());
+          deputy.group = group;
+          deputies.push(deputy);
+        }
+      }
+    });
+  }
+
   return deputies;
-}
-
-function parseDate(string) {
-  let date = string.slice(5, 15);
-  let time = string.slice(27, 50);
-
-  return new Date(date.slice(6, 10), parseInt(date.slice(3, 5))-1, date.slice(0, 2), time.slice(0, 2), time.slice(3, 5), time.slice(6, 8));
 }
 
 function fixLetters(string) {
