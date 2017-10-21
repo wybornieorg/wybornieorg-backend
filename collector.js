@@ -5,12 +5,9 @@ console.log('Uruchomiono collector.js');
 const cheerio = require('cheerio');
 const request = require('request');
 const co = require('co');
-const Buffer = require('buffer').Buffer;
-const Iconv = require('iconv').Iconv;
+const iconv = require('iconv-lite');
 
 const db = require('./database.js');
-
-const iconv = new Iconv('ISO-8859-2', 'UTF-8');
 
 db.Project.sync({
   // force - czyść tabelę / dev mode
@@ -176,7 +173,14 @@ function getBodyP(url) {
     }, (err, response, body) => {
       if (err) reject(err);
       else {
-        resolve(iconv.convert(body));
+        let test = body.toString().search('ISO-8859-2');
+        console.log(test);
+
+        if (test !== -1) {
+          resolve(iconv.decode(body, 'ISO-8859-2'));
+        } else {
+          resolve (iconv.decode(body, 'UTF-8'));
+        }
       }
     });
   });
@@ -337,8 +341,8 @@ function getDeputies(body, group, kadencja) {
       for (var i = 1; i < 5; i += 3) {
         if (element.eq(i).html() != null) {
           let deputy = {};
-          deputy.name = fixLetters(element.eq(i).html());
-          deputy.vote = fixLetters(element.eq(i + 1).html());
+          deputy.name = element.eq(i).text();
+          deputy.vote = element.eq(i + 1).text();
           deputy.group = group;
           deputies.push(deputy);
         }
@@ -354,8 +358,8 @@ function getDeputies(body, group, kadencja) {
       for (var i = 0; i < 3; i += 2) {
         if (element.eq(i).text() !== "") {
           let deputy = {};
-          deputy.name = fixLetters(element.eq(i).text());
-          deputy.vote = fixLetters(element.eq(i + 1).text());
+          deputy.name = element.eq(i).text();
+          deputy.vote = element.eq(i + 1).text();
           deputy.group = group;
           deputies.push(deputy);
         }
@@ -364,42 +368,4 @@ function getDeputies(body, group, kadencja) {
   }
 
   return deputies;
-}
-
-function fixLetters(string) {
-  let letters = {
-    "Ą": "&#x104;",
-    "ą": "&#x105;",
-
-    "Ę": "&#x118;",
-    "ę": "&#x119;",
-
-    "Ó": "&Oacute;",
-    "Ó": "&#xD3;",
-    "ó": "&oacute;",
-    "ó": "&#xF3;",
-
-    "Ć": "&#x106;",
-    "ć": "&#x107;",
-
-    "Ł": "&#x141;",
-    "ł": "&#x142;",
-
-    "Ń": "&#x143;",
-    "ń": "&#x144;",
-
-    "Ś": "&#x15A;",
-    "ś": "&#x15B;",
-
-    "Ź": "&#x179;",
-    "ź": "&#x17A;",
-
-    "Ż": "&#x17B;",
-    "ż": "&#x17C;",
-  };
-  for (var variable in letters) {
-    // console.log(`Zmieniam ${letters[variable]} na ${variable}`);
-    string = string.replace(new RegExp(letters[variable], 'g'), variable);
-  }
-  return string;
 }
