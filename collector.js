@@ -19,11 +19,11 @@ const base = 'http://www.sejm.gov.pl';
 
 const kadencjeLinki = [{
     nrKadencji: 8,
-    link: 'http://orka.sejm.gov.pl/projustall8.htm'
+    link: 'http://www.sejm.gov.pl/Sejm8.nsf/page.xsp/przeglad_projust'
   },
   {
     nrKadencji: 7,
-    link: 'http://orka.sejm.gov.pl/projustall7.htm'
+    link: 'http://www.sejm.gov.pl/Sejm7.nsf/page.xsp/przeglad_projust'
   },
   {
     nrKadencji: 6,
@@ -217,7 +217,12 @@ function getProjects(body, kadencja) {
     }
     project.tytul = project.tytul.replace(/\n/g, '').trim();
 
-    project.trescLink = element.eq(1).find('a').attr('href');
+    project.trescLink = function(link) {
+      if (link.indexOf('http') === -1) {
+        link = base + link;
+      }
+      return link;
+    }(element.eq(1).find('a').attr('href'));
     project.kadencja = kadencja;
 
     //WEJDŹ W PRZEBIEG I ZCZYTAJ DANE OSTATNIEGO GŁOSOWANIA, CZYLI DECYDUJĄCEGO a.vote ostatniu
@@ -232,7 +237,7 @@ function getProjects(body, kadencja) {
 
 
     // project.komisje = element.eq(4).html();
-    console.log(project);
+    // console.log(project);
     projects.push(project);
 
   });
