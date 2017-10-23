@@ -55,11 +55,12 @@ router.get('/dev/projekty', async(ctx) => {
   })
 })
 
-router.get('/dev/projekty/:druk', async(ctx) => {
+router.get('/dev/projekty/:kadencja/:druk', async(ctx) => {
   ctx.type = 'html'
   ctx.body = await db.Project.findOne({
     where: {
-      drukNr: ctx.params.druk
+      drukNr: ctx.params.druk,
+      kadencja: ctx.params.kadencja
     }
   })
 
