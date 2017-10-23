@@ -355,7 +355,7 @@ function getDeputies(body, group, kadencja) {
     });
   } else {
     $('tbody').find('tr').each((it, ele) => {
-      if (it < 7) {
+      if (it < 6) {
         return;
       }
 
