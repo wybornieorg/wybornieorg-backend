@@ -297,7 +297,7 @@ function getVotingDate(body, kadencja) {
   votingHour = votingDate.match(/[0-9]{2}:[0-9]{2}/).toString();
 
   votingDate = votingDay.split('-').concat(votingHour.split(':'))
-  votingDate = new Date(votingDate[2], votingDate[1], votingDate[0], votingDate[3], votingDate[4])
+  votingDate = new Date(votingDate[2], votingDate[1]-1, votingDate[0], votingDate[3], votingDate[4])
   return votingDate;
 }
 
