@@ -106,6 +106,8 @@ co(function*() {
       project.votingDate = getVotingDate(votingBody, project.kadencja);
       console.log(project.votingDate);
 
+      project.votingIntention = getVotingIntention(votingBody);
+
       console.log(`Pobieranie groupLinks z votingBody`);
       project.groupLinks = getGroupLinks(votingBody, project.kadencja);
       console.log(project.groupLinks);
@@ -299,6 +301,10 @@ function getVotingDate(body, kadencja) {
   votingDate = votingDay.split('-').concat(votingHour.split(':'))
   votingDate = new Date(votingDate[2], votingDate[1]-1, votingDate[0], votingDate[3], votingDate[4])
   return votingDate;
+}
+
+function getVotingIntention(body) {
+    return body.indexOf('odrzucenie') !== -1 ? 'odrzucenie' : 'przyjęcie'
 }
 
 function getGroupLinks(body, kadencja) {
