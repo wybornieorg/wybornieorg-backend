@@ -51,7 +51,7 @@ const db = require('./database.js');
 router.get('/dev/projekty', async(ctx) => {
   ctx.type = 'html'
   ctx.body = await db.Project.findAll({
-    attributes: ['drukNr', 'tytul', 'frekwencja', 'status', 'kadencja']
+    attributes: ['drukNr', 'tytul', 'frekwencja', 'status', 'kadencja', 'votingDate']
   })
 })
 
