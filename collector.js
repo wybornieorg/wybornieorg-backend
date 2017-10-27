@@ -1,5 +1,3 @@
-// TODO: jeśli uchwalony lub odrzucony - pobierz wyniki decydujacego glosowania, jesli przed 3 czytaniem sprawdzaj codziennie o 16 czy byla zmiana statusu
-
 console.log('Uruchomiono collector.js');
 
 const cheerio = require('cheerio');
@@ -17,7 +15,8 @@ db.Project.sync({
 
 const base = 'http://www.sejm.gov.pl';
 
-const kadencjeLinki = [{
+const kadencjeLinki = [
+  {
     nrKadencji: 8,
     link: 'http://www.sejm.gov.pl/Sejm8.nsf/page.xsp/przeglad_projust'
   },
@@ -55,7 +54,7 @@ co(function*() {
   }
   console.log(projects);
 
-  for (project of projects.reverse()) {
+  for (project of projects) {
     test = yield db.Project.findOne({
       where: {
         drukNr: project.drukNr
@@ -67,12 +66,8 @@ co(function*() {
     }
 
 
-    // if (przebiegBody.search(project.status) === -1) {
-    //
-    //   project.status1 = 'nieznany';
-    //   continue;
-    // }
-    // console.log(project.status);
+
+    console.log(project.status);
     voteData: {
       console.log(`Zbieranie danych o projekcie drukNr: ${project.drukNr}`);
       console.log();
@@ -88,13 +83,16 @@ co(function*() {
 
       przebiegBody = yield getBodyP(project.przebiegLink);
 
+      if (przebiegBody.search('wycofany') !== -1 || przebiegBody.indexOf(project.status) === -1) {
+        continue;
+      }
       console.log(`Pobieranie opis z przebiegBody`);
-      project.opis = getVotingDescription(przebiegBody, project.kadencja);
+      project.opis = getProjectDescription(przebiegBody, project.kadencja);
       console.log(project.opis);
 
       console.log(`Pobieranie votingLink z przebiegBody`);
       project.votingLink = getDecidingVotingLink(przebiegBody, project.kadencja);
-      console.log(project.votingLink);
+      console.log(`votingLink: ${project.votingLink}`);
       if (project.votingLink === undefined) {
         continue;
       }
@@ -113,6 +111,11 @@ co(function*() {
       console.log(project.groupLinks);
 
       project.deputies = [];
+
+      if (project.groupLinks === []) {
+        continue;
+      }
+
       for (variable of project.groupLinks) {
         // console.log(variable.source);
         deputies = getDeputies(yield getBodyP(variable.source), variable.group, project.kadencja);
@@ -125,6 +128,9 @@ co(function*() {
         return value.vote === 'Nieobecny'
       }).length / project.deputies.length
 
+      if (project.frekwencja === 0) {
+        continue;
+      }
       console.log(project.frekwencja);
 
 
@@ -227,7 +233,6 @@ function getProjects(body, kadencja) {
     }(element.eq(1).find('a').attr('href'));
     project.kadencja = kadencja;
 
-    //WEJDŹ W PRZEBIEG I ZCZYTAJ DANE OSTATNIEGO GŁOSOWANIA, CZYLI DECYDUJĄCEGO a.vote ostatniu
 
     project.isapLink = element.eq(2).find('a').attr('href');
     project.przebiegLink = function(link) {
@@ -265,7 +270,12 @@ function getDecidingVotingLink(body, kadencja) {
   console.log(kadencja);
 
   if (kadencja > 6) {
-    lastVotingLink = base + `/Sejm${kadencja}.nsf/` + $('a.vote').last().attr('href');
+    let relLink = $('a.vote').last().attr('href')
+
+    if (relLink === undefined) {
+      return undefined;
+    }
+    lastVotingLink = base + `/Sejm${kadencja}.nsf/` + relLink;
 
   } else {
     lastVotingLink = $('a').filter((index, element) => {
@@ -275,7 +285,7 @@ function getDecidingVotingLink(body, kadencja) {
   return lastVotingLink;
 }
 
-function getVotingDescription(body, kadencja) {
+function getProjectDescription(body, kadencja) {
   let $ = cheerio.load(body);
   let votingDescription;
   if (kadencja > 6) {
@@ -295,6 +305,7 @@ function getVotingDate(body, kadencja) {
   } else {
     votingDate = $('td').text();
   }
+  console.log(votingDate);
   votingDay = votingDate.match(/[0-9]{2}-[0-9]{2}-[0-9]{4}/).toString();
   votingHour = votingDate.match(/[0-9]{2}:[0-9]{2}/).toString();
 
@@ -326,6 +337,9 @@ function getGroupLinks(body, kadencja) {
   table.children().each((i, elem) => {
     let currentGroup = $(elem).find('a').first().text();
     let link = $(elem).find('a').attr('href');
+    if (link === undefined) {
+      return false;
+    }
     if (kadencja > 6) {
       link = base + `/Sejm${kadencja}.nsf/` + link;
     } else {
