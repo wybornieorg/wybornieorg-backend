@@ -38,6 +38,7 @@ const Project = sequelize.define('project', {
   "drukPdfLink": Sequelize.STRING,
   "isapLink": Sequelize.STRING,
   "przebiegLink": Sequelize.STRING,
+  "komisje": Sequelize.STRING,
   "drukNr": Sequelize.INTEGER,
   "kadencja": Sequelize.INTEGER,
   "frekwencja": Sequelize.FLOAT,

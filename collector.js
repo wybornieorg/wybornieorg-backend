@@ -231,8 +231,8 @@ function getProjects(body, kadencja) {
       }
       return link;
     }(element.eq(1).find('a').attr('href'));
-    project.kadencja = kadencja;
 
+    project.kadencja = kadencja;
 
     project.isapLink = element.eq(2).find('a').attr('href');
     project.przebiegLink = function(link) {
@@ -242,8 +242,13 @@ function getProjects(body, kadencja) {
       return link;
     }(element.eq(3).find('a').attr('href'));
 
+    project.komisje = function(link) {
+      if (link !== undefined && link.indexOf('http') === -1) {
+        link = base + link;
+      }
+      return link;
+    }(element.eq(4).find('a').attr('href'));
 
-    // project.komisje = element.eq(4).html();
     // console.log(project);
     projects.push(project);
 
@@ -289,7 +294,7 @@ function getProjectDescription(body, kadencja) {
   let $ = cheerio.load(body);
   let votingDescription;
   if (kadencja > 6) {
-    votingDescription = $('div.left p').text();
+    votingDescription = $('div.left p[class=""]').text();
   } else {
     votingDescription = $('tr').eq(8).text().replace(/\n/g, '').trim();
   }
