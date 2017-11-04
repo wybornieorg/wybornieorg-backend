@@ -10,7 +10,7 @@ var sequelize = new Sequelize('sejmortestdb', 'postgres', '', {
   logging: false,
 
   pool: {
-    max: 5,
+    max: 30,
     min: 0,
     idle: 10000
   },
@@ -41,18 +41,22 @@ const Project = sequelize.define('project', {
   "komisje": Sequelize.STRING,
   "drukNr": Sequelize.INTEGER,
   "kadencja": Sequelize.INTEGER,
+});
+
+const Voting = sequelize.define('voting', {
+  "status": Sequelize.STRING,
+  "kadencja": Sequelize.INTEGER,
   "frekwencja": Sequelize.FLOAT,
   "votingLink": Sequelize.STRING,
   "votingDate": Sequelize.JSON,
   "votingIntention": Sequelize.STRING,
+  "numbers": Sequelize.JSON,
   "groupLinks": Sequelize.JSON,
   "deputies": Sequelize.JSON,
 });
 
-var Voting = sequelize.define('Voting', {
-  // name: Sequelize.STRING,
-});
-
+Voting.hasMany(Project)
+Project.belongsTo(Voting)
 
 module.exports = {
   'sequelize': sequelize,

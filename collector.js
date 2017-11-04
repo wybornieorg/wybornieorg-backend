@@ -7,11 +7,9 @@ const iconv = require('iconv-lite');
 
 const db = require('./database.js');
 
-db.Project.sync({
-  // force - czyść tabelę / dev mode
+db.sequelize.sync({
   force: true
-})
-
+}).then(start)
 
 const base = 'http://www.sejm.gov.pl';
 
