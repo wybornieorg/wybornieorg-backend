@@ -8,6 +8,7 @@
     "co": "^4.6.0",
     "iconv-lite": "^0.4.19",
     "koa": "^2.2.0",
+    "koa-compress": "^2.0.0",
     "koa-router": "^7.2.0",
     "koa-static": "^3.0.0",
     "nodemon": "^1.11.0",

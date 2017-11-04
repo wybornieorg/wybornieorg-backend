@@ -4,6 +4,7 @@ const Koa = require('koa')
 // const CSRF = require('koa-csrf').default
 // const flash = require('koa-flash')
 // const https = require('https')
+const compress = require('koa-compress')
 const app = new Koa()
 // const lastDate = new Date().toLocaleString()
 
@@ -17,14 +18,20 @@ const app = new Koa()
 const fs = require('fs')
 const router = require('koa-router')()
 
-app.use(async (ctx,next) => {
-  ctx.response.set('Access-Control-Allow-Origin', '*');
-  ctx.response.set('Access-Control-Allow-Methods', 'GET');
-  ctx.response.set('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
-  ctx.response.set('Access-Control-Allow-Credentials', true);
-  await next();
+app.use(compress({
+  threshold: 2048,
+  flush: require('zlib')
+    .Z_SYNC_FLUSH
+}));
 
-}).use(router.routes())
+app.use(async (ctx, next) => {
+    ctx.response.set('Access-Control-Allow-Origin', '*');
+    ctx.response.set('Access-Control-Allow-Methods', 'GET');
+    ctx.response.set('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+    ctx.response.set('Access-Control-Allow-Credentials', true);
+    await next();
+  })
+  .use(router.routes())
   .use(router.allowedMethods());
 //
 // blog = fs.readdirSync('./views/blog')
