@@ -2,7 +2,6 @@ console.log('Uruchomiono collector.js');
 
 const cheerio = require('cheerio');
 const request = require('request');
-const co = require('co');
 const iconv = require('iconv-lite');
 
 const db = require('./database.js');
@@ -39,47 +38,45 @@ const kadencjeLinki = [
     link: 'http://www.sejm.gov.pl/archiwum/prace/kadencja3/projust_all3.htm'
   },
 ];
-// module.exports = {
-//   test: test
-// }
-// var globalDeputies = new Set()
 
-co(function*() {
+
+async function start () {
   let projects = [];
 
   for (kadencja of kadencjeLinki) {
-    projects = projects.concat(getProjects(yield getBodyP(kadencja.link), kadencja.nrKadencji));
+    projects = projects.concat(getProjects(await getBodyP(kadencja.link), kadencja.nrKadencji));
   }
   console.log(projects);
 
   for (project of projects) {
-    test = yield db.Project.findOne({
+    test = await db.Project.findOne({
       where: {
         drukNr: project.drukNr
       }
     });
-    // console.log(test);
+
     if (test != null) {
+      console.log(`Projekt nr: ${test.drukNr} jest już w bazie`);
       continue;
     }
 
-
+    let voting = {}
 
     console.log(project.status);
+
     voteData: {
-      console.log(`Zbieranie danych o projekcie drukNr: ${project.drukNr}`);
-      console.log();
+      console.log(`Zbieranie danych o projekcie drukNr: ${project.drukNr}\n`);
       console.log(project);
 
       console.log(`Pobieranie drukPdfLink z ${project.trescLink}`);
       if (project.kadencja > 4) {
-        project.drukPdfLink = scrapeDrukPdfLink(yield getBodyP(project.trescLink), project.kadencja)
+        project.drukPdfLink = scrapeDrukPdfLink(await getBodyP(project.trescLink), project.kadencja)
       } else {
         project.drukPdfLink = project.trescLink
       }
       console.log(`Pobieranie przebiegBody z ${project.przebiegLink}`);
 
-      przebiegBody = yield getBodyP(project.przebiegLink);
+      przebiegBody = await getBodyP(project.przebiegLink);
 
       if (przebiegBody.search('wycofany') !== -1 || przebiegBody.indexOf(project.status) === -1) {
         continue;
@@ -89,52 +86,66 @@ co(function*() {
       console.log(project.opis);
 
       console.log(`Pobieranie votingLink z przebiegBody`);
-      project.votingLink = getDecidingVotingLink(przebiegBody, project.kadencja);
-      console.log(`votingLink: ${project.votingLink}`);
-      if (project.votingLink === undefined) {
+      voting.votingLink = getDecidingVotingLink(przebiegBody, project.kadencja);
+      console.log(`votingLink: ${voting.votingLink}`);
+      if (voting.votingLink === undefined) {
         continue;
       }
+      voting.status = project.status
+      voting.numbers = getVotingNumbers(voting.votingLink)
+      console.log(voting.numbers);
 
-      console.log(`Pobieranie votingBody z ${project.votingLink}`);
-      let votingBody = yield getBodyP(project.votingLink);
+      console.log(`Pobieranie votingBody z ${voting.votingLink}`);
+      let votingBody = await getBodyP(voting.votingLink);
 
       console.log(`Pobieranie votingDate z votingBody`);
-      project.votingDate = getVotingDate(votingBody, project.kadencja);
-      console.log(project.votingDate);
+      voting.votingDate = getVotingDate(votingBody, project.kadencja);
+      console.log(voting.votingDate);
 
-      project.votingIntention = getVotingIntention(votingBody);
+      voting.votingIntention = getVotingIntention(votingBody);
 
       console.log(`Pobieranie groupLinks z votingBody`);
-      project.groupLinks = getGroupLinks(votingBody, project.kadencja);
+      voting.groupLinks = getGroupLinks(votingBody, project.kadencja);
       console.log(project.groupLinks);
 
-      project.deputies = [];
+      voting.deputies = [];
 
-      if (project.groupLinks === []) {
+      if (voting.groupLinks === []) {
         continue;
       }
 
-      for (variable of project.groupLinks) {
+      for (variable of voting.groupLinks) {
         // console.log(variable.source);
-        deputies = getDeputies(yield getBodyP(variable.source), variable.group, project.kadencja);
-        project.deputies = project.deputies.concat(deputies);
+        deputies = getDeputies(await getBodyP(variable.source), variable.group, project.kadencja);
+        voting.deputies = voting.deputies.concat(deputies);
       }
 
-      console.log(project.deputies);
+      console.log(voting.deputies);
 
-      project.frekwencja = 1 - project.deputies.filter((value) => {
+      voting.frekwencja = 1 - voting.deputies.filter((value) => {
         return value.vote === 'Nieobecny'
-      }).length / project.deputies.length
+      }).length / voting.deputies.length
 
-      if (project.frekwencja === 0) {
+      if (voting.frekwencja === 0) {
         continue;
       }
-      console.log(project.frekwencja);
+      console.log(voting.frekwencja);
 
+      await db.Voting.findOrCreate({
+        where: {
+          votingLink: voting.votingLink
+        },
+        defaults: voting
+      }).then((result) => {
+        console.log(`Zapisano w bazie danych glosowanie: ${result[0].votingLink}`);
+        project.votingId = result[0].id
+
+        console.log(project);
+
+      });
 
       // console.log(project);
-      console.log(project);
-      db.Project.findOrCreate({
+      await db.Project.findOrCreate({
         where: {
           drukNr: project.drukNr
         },
@@ -147,8 +158,9 @@ co(function*() {
     }
 
   }
-  console.log('klotz');
-})
+  console.log('Odpal następny update za 24 godziny.');
+  setTimeout(start, 1000*60*60*24)
+}
 
 // NOTE: Co daje ta klasa? attendance i tak jest zapisywane, pomimo, że brak tej zmiennej w konstruktorze
 // class Project {
@@ -288,11 +300,22 @@ function getDecidingVotingLink(body, kadencja) {
   return lastVotingLink;
 }
 
+function getVotingNumbers(votingLink) {
+  let data = votingLink.split('&').slice(1).map((item) => {
+    return parseInt(item.match(/\d+/)[0])
+  })
+  let [kadencja, posiedzenie, glosowanie] = data
+  console.log(kadencja);
+  return {kadencja: kadencja, posiedzenie: posiedzenie, glosowanie: glosowanie}
+}
+
 function getProjectDescription(body, kadencja) {
   let $ = cheerio.load(body);
   let votingDescription;
   if (kadencja > 6) {
-    votingDescription = $('div.left p[class=""]').text();
+    votingDescription = $('div.left').find('p').filter((index, element) => {
+      return $(element).attr('class') === undefined
+    }).text();
   } else {
     votingDescription = $('tr').eq(8).text().replace(/\n/g, '').trim();
   }

@@ -55,20 +55,37 @@ app.use(async (ctx, next) => {
 
 const db = require('./database.js');
 
-router.get('/dev/projekty', async(ctx) => {
+router.get('/dev/projekty', async (ctx) => {
   ctx.type = 'html'
   ctx.body = await db.Project.findAll({
-    attributes: ['drukNr', 'tytul', 'frekwencja', 'status', 'kadencja', 'votingDate']
+    // attributes: ['drukNr', 'tytul', 'frekwencja', 'status', 'kadencja', 'votingDate']
   })
 })
 
-router.get('/dev/projekty/:kadencja/:druk', async(ctx) => {
+router.get('/dev/glosowania', async (ctx) => {
   ctx.type = 'html'
-  ctx.body = await db.Project.findOne({
+  ctx.body = await db.Voting.findAll({
+    attributes: ['status', 'frekwencja', 'votingIntention', 'numbers', 'votingDate', 'votingLink'],
+    include: [{
+      model: db.Project,
+      attributes: ['drukNr', 'tytul', 'kadencja']
+    }]
+  })
+})
+
+router.get('/dev/glosowania/:kadencja/:posiedzenie/:glosowanie', async (ctx) => {
+  ctx.type = 'html'
+  ctx.body = await db.Voting.findOne({
     where: {
-      drukNr: ctx.params.druk,
-      kadencja: ctx.params.kadencja
-    }
+      numbers: {
+        kadencja: ctx.params.kadencja,
+        posiedzenie: ctx.params.posiedzenie,
+        glosowanie: ctx.params.glosowanie
+      }
+    },
+    include: [{
+      model: db.Project
+    }]
   })
 
 });
