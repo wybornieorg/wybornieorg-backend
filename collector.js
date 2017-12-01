@@ -158,7 +158,7 @@ async function start () {
     }
 
   }
-  console.log('Odpal następny update za 24 godziny.');
+  console.log(`Ukończono ${new Date()}. Odpal następny update za 24 godziny.`);
   setTimeout(start, 1000*60*60*24)
 }
 
