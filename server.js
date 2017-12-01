@@ -65,7 +65,7 @@ router.get('/dev/projekty', async (ctx) => {
 router.get('/dev/glosowania', async (ctx) => {
   ctx.type = 'html'
   ctx.body = await db.Voting.findAll({
-    attributes: ['status', 'frekwencja', 'votingIntention', 'numbers', 'votingDate', 'votingLink'],
+    attributes: ['status', 'frekwencja', 'numbers', 'votingDate'],
     include: [{
       model: db.Project,
       attributes: ['drukNr', 'tytul', 'kadencja']
