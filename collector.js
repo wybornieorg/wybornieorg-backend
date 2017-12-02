@@ -78,7 +78,8 @@ async function start () {
 
       przebiegBody = await getBodyP(project.przebiegLink);
 
-      if (przebiegBody.search('wycofany') !== -1 || przebiegBody.indexOf(project.status) === -1) {
+      if (przebiegBody.search('wycofany dnia') !== -1 || przebiegBody.indexOf(project.status) === -1) {
+        console.log(`Pomijam pobieranie ${project.drukNr}`);
         continue;
       }
       console.log(`Pobieranie opis z przebiegBody`);
