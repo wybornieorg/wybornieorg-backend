@@ -158,8 +158,8 @@ async function start () {
     }
 
   }
-  console.log(`Ukończono ${new Date()}. Odpal następny update za 24 godziny.`);
-  setTimeout(start, 1000*60*60*24)
+  console.log(`Ukończono ${new Date()}. Odpal następny update za 4 godziny.`);
+  setTimeout(start, 1000*60*60*4)
 }
 
 // NOTE: Co daje ta klasa? attendance i tak jest zapisywane, pomimo, że brak tej zmiennej w konstruktorze
