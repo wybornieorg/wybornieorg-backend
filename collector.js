@@ -82,6 +82,9 @@ async function start () {
         console.log(`Pomijam pobieranie ${project.drukNr}`);
         continue;
       }
+      if (przebiegBody.search('wykonanie prawa Unii Europejskiej') !== -1) {
+          project.prawoUE = true;
+      }
       console.log(`Pobieranie opis z przebiegBody`);
       project.opis = getProjectDescription(przebiegBody, project.kadencja);
       console.log(project.opis);

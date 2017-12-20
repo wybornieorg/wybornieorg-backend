@@ -41,11 +41,11 @@ const Project = sequelize.define('project', {
   "komisje": Sequelize.STRING,
   "drukNr": Sequelize.INTEGER,
   "kadencja": Sequelize.INTEGER,
+  "prawoUE": { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false }
 });
 
 const Voting = sequelize.define('voting', {
   "status": Sequelize.STRING,
-  "kadencja": Sequelize.INTEGER,
   "frekwencja": Sequelize.FLOAT,
   "votingLink": Sequelize.STRING,
   "votingDate": Sequelize.JSON,
