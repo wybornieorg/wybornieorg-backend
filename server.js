@@ -68,7 +68,23 @@ router.get('/dev/glosowania', async (ctx) => {
     attributes: ['status', 'frekwencja', 'numbers', 'votingDate'],
     include: [{
       model: db.Project,
-      attributes: ['drukNr', 'tytul', 'kadencja']
+      attributes: ['drukNr', 'tytul', 'kadencja', 'prawoUE']
+    }]
+  })
+})
+
+router.get('/dev/glosowania/:kadencja', async (ctx) => {
+  ctx.type = 'html'
+  ctx.body = await db.Voting.findAll({
+    attributes: ['status', 'frekwencja', 'numbers', 'votingDate'],
+    where: {
+      numbers: {
+        kadencja: ctx.params.kadencja
+      }
+    },
+    include: [{
+      model: db.Project,
+      attributes: ['drukNr', 'tytul', 'kadencja', 'prawoUE']
     }]
   })
 })
