@@ -5,6 +5,7 @@ const request = require('request');
 const iconv = require('iconv-lite');
 
 const db = require('./database.js');
+const nazwazwyczajowa = require('./nazwazwyczajowa.js');
 
 db.sequelize.sync({
   force: true
@@ -162,6 +163,7 @@ async function start () {
     }
 
   }
+  await nazwazwyczajowa.start()
   console.log(`Ukończono ${new Date()}. Odpal następny update za 4 godziny.`);
   setTimeout(start, 1000*60*60*4)
 }

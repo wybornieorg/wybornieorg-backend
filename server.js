@@ -85,7 +85,11 @@ router.get('/dev/glosowania/:kadencja', async (ctx) => {
     include: [{
       model: db.Project,
       attributes: ['drukNr', 'tytul', 'kadencja', 'prawoUE']
-    }]
+    },
+    {
+      model: db.Nazwa
+    }
+  ]
   })
 })
 
@@ -101,7 +105,11 @@ router.get('/dev/glosowania/:kadencja/:posiedzenie/:glosowanie', async (ctx) => 
     },
     include: [{
       model: db.Project
-    }]
+    },
+    {
+      model: db.Nazwa
+    }
+  ]
   })
 
 });

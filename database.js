@@ -56,10 +56,20 @@ const Voting = sequelize.define('voting', {
 });
 
 Voting.hasMany(Project)
+const NazwaZwyczajowa = sequelize.define('nazwa', {
+  "nazwaZwyczajowa": Sequelize.STRING,
+  "numbers": {
+    type: Sequelize.JSON
+  }
+});
+
 Project.belongsTo(Voting)
+NazwaZwyczajowa.belongsTo(Voting)
+Voting.hasOne(NazwaZwyczajowa)
 
 module.exports = {
   'sequelize': sequelize,
   'Project': Project,
   'Voting': Voting,
+  'Nazwa': NazwaZwyczajowa,
 }
