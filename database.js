@@ -55,7 +55,16 @@ const Voting = sequelize.define('voting', {
   "deputies": Sequelize.JSON,
 });
 
-Voting.hasMany(Project)
+const MamPrawoWiedziec = sequelize.define('mpw', {
+  "desc": Sequelize.TEXT,
+  "markup": Sequelize.TEXT,
+  "source": Sequelize.STRING,
+  "href": Sequelize.STRING,
+  "numbers": {
+    type: Sequelize.JSON
+  }
+});
+
 const NazwaZwyczajowa = sequelize.define('nazwa', {
   "nazwaZwyczajowa": Sequelize.STRING,
   "numbers": {
@@ -64,6 +73,9 @@ const NazwaZwyczajowa = sequelize.define('nazwa', {
 });
 
 Project.belongsTo(Voting)
+Voting.hasMany(Project)
+MamPrawoWiedziec.belongsTo(Voting)
+Voting.hasOne(MamPrawoWiedziec)
 NazwaZwyczajowa.belongsTo(Voting)
 Voting.hasOne(NazwaZwyczajowa)
 
@@ -71,5 +83,6 @@ module.exports = {
   'sequelize': sequelize,
   'Project': Project,
   'Voting': Voting,
+  'MPW': MamPrawoWiedziec,
   'Nazwa': NazwaZwyczajowa,
 }

@@ -33,25 +33,6 @@ app.use(async (ctx, next) => {
   })
   .use(router.routes())
   .use(router.allowedMethods());
-//
-// blog = fs.readdirSync('./views/blog')
-// blogbody = ''
-// console.log(blog);
-//
-// if (blog.length != 0) {
-//   for (var i = blog.length - 1; i >= 0; i--) {
-//     date = fs.statSync('views/blog/' + blog[i]).mtime.toLocaleString()
-//     blog[i] = fs.readFileSync('views/blog/' + blog[i], 'utf8')
-//     blogbody += blog[i]
-//   }
-// }
-//
-//
-// router.get('/blog', async(ctx) => {
-//   ctx.type = 'html'
-//   let body = fs.readFileSync('views/blog.html', 'utf8')
-//   ctx.body = body.replace('{blog}', blogbody)
-// })
 
 const db = require('./database.js');
 
@@ -73,6 +54,16 @@ router.get('/dev/glosowania', async (ctx) => {
   })
 })
 
+router.get('/dev/kadencje', async (ctx) => {
+  // ctx.type = 'json'
+  let query = ` \
+  SELECT numbers ->> 'kadencja' AS kadencja \
+   FROM votings \
+   GROUP BY kadencja \
+  `
+  ctx.body = await db.sequelize.query(query, { raw: true })
+})
+
 router.get('/dev/glosowania/:kadencja', async (ctx) => {
   ctx.type = 'html'
   ctx.body = await db.Voting.findAll({
@@ -85,6 +76,9 @@ router.get('/dev/glosowania/:kadencja', async (ctx) => {
     include: [{
       model: db.Project,
       attributes: ['drukNr', 'tytul', 'kadencja', 'prawoUE']
+    },
+    {
+      model: db.MPW
     },
     {
       model: db.Nazwa
@@ -107,14 +101,25 @@ router.get('/dev/glosowania/:kadencja/:posiedzenie/:glosowanie', async (ctx) => 
       model: db.Project
     },
     {
+      model: db.MPW
+    },
+    {
       model: db.Nazwa
     }
   ]
   })
 
-});
+})
 
+router.get('/dev/mamprawowiedziec', async (ctx) => {
+  ctx.type = 'html'
+  ctx.body = await db.MPW.findAll()
+})
 
+router.get('/dev/nazwyzwyczajowe', async (ctx) => {
+  ctx.type = 'html'
+  ctx.body = await db.Nazwa.findAll()
+})
 
 // start server
 const port = process.env.PORT || 3000
