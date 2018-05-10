@@ -12,6 +12,11 @@ db.sequelize.sync({
   force: true
 }).then(start)
 
+let update = true
+exports.update = function() {
+  return update
+};
+
 const base = 'http://www.sejm.gov.pl';
 
 const kadencjeLinki = [
@@ -43,6 +48,7 @@ const kadencjeLinki = [
 
 
 async function start () {
+  update = true
   let projects = [];
 
   for (kadencja of kadencjeLinki) {
@@ -168,6 +174,7 @@ async function start () {
   await mamprawowiedziec.start()
   await nazwazwyczajowa.start()
   console.log(`Ukończono ${new Date()}. Odpal następny update za 4 godziny.`);
+  update = false
   setTimeout(start, 1000*60*60*4)
 }
 

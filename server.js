@@ -17,6 +17,7 @@ const app = new Koa()
 // routes
 const fs = require('fs')
 const router = require('koa-router')()
+const collectorStatus = require('./collector');
 
 app.use(compress({
   threshold: 2048,
@@ -36,21 +37,14 @@ app.use(async (ctx, next) => {
 
 const db = require('./database.js');
 
+router.get('/dev/status', async (ctx) => {
+  ctx.body = collectorStatus.update()
+})
+
 router.get('/dev/projekty', async (ctx) => {
   ctx.type = 'html'
   ctx.body = await db.Project.findAll({
     // attributes: ['drukNr', 'tytul', 'frekwencja', 'status', 'kadencja', 'votingDate']
-  })
-})
-
-router.get('/dev/glosowania', async (ctx) => {
-  ctx.type = 'html'
-  ctx.body = await db.Voting.findAll({
-    attributes: ['status', 'frekwencja', 'numbers', 'votingDate'],
-    include: [{
-      model: db.Project,
-      attributes: ['drukNr', 'tytul', 'kadencja', 'prawoUE']
-    }]
   })
 })
 
@@ -64,9 +58,25 @@ router.get('/dev/kadencje', async (ctx) => {
   ctx.body = await db.sequelize.query(query, { raw: true })
 })
 
+router.get('/dev/glosowania', async (ctx) => {
+  ctx.type = 'html'
+  let votings = await db.Voting.findAll({
+    attributes: ['status', 'frekwencja', 'numbers', 'votingDate'],
+    include: [{
+      model: db.Project,
+      attributes: ['drukNr', 'tytul', 'kadencja', 'prawoUE']
+    }]
+  })
+  
+  ctx.body = {
+    collectorStatus: collectorStatus.update(),
+    votings: votings
+  }
+})
+
 router.get('/dev/glosowania/:kadencja', async (ctx) => {
   ctx.type = 'html'
-  ctx.body = await db.Voting.findAll({
+  let votings = await db.Voting.findAll({
     attributes: ['status', 'frekwencja', 'numbers', 'votingDate'],
     where: {
       numbers: {
@@ -85,6 +95,12 @@ router.get('/dev/glosowania/:kadencja', async (ctx) => {
     }
   ]
   })
+
+  ctx.body = {
+    collectorStatus: collectorStatus.update(),
+    votings: votings
+  }
+
 })
 
 router.get('/dev/glosowania/:kadencja/:posiedzenie/:glosowanie', async (ctx) => {
