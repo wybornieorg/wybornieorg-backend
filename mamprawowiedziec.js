@@ -31,6 +31,10 @@ async function start () {
   for (variable of arts) {
     let art = await getBodyP(`${base}/${variable.href}`)
     let $ = cheerio.load(art);
+    let author = $('.author a').map((i, el) => {
+      return $(el).text()
+    }).get()
+    console.log(author);
 
     let tmp = { desc: '', markup: '', href: ''}
     $('#text').children().each((index, element) => {
@@ -39,6 +43,7 @@ async function start () {
       } else if ($(element).find('a').text().search('łosowani') > -1) {
         tmp.href = $(element).find('a').last().attr('href')
         tmp.source = variable.href
+        tmp.author = author
         // tmp.voting = $(element).next().find('a').attr('href')
         projects.push(tmp)
         tmp = { desc: '', markup: '', href: ''}
