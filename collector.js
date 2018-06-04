@@ -203,9 +203,14 @@ function getBodyP(url) {
   return new Promise((resolve, reject) => {
     request({
       url: url,
-      encoding: null
+      encoding: null,
+      timeout: 5000
     }, (err, response, body) => {
-      if (err) reject(err);
+      if (err) {
+        reject(err);
+        setTimeout(start, 5000)
+        // throw err
+      }
       else {
         let test = body.toString().search('ISO-8859-2');
         console.log(test);
