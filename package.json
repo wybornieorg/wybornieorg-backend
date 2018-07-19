@@ -5,16 +5,17 @@
   "main": "main.js",
   "dependencies": {
     "cheerio": "^1.0.0-rc.1",
-    "iconv-lite": "^0.4.21",
-    "koa": "^2.5.0",
+    "iconv-lite": "^0.4.23",
+    "koa": "^2.5.2",
     "koa-compress": "^2.0.0",
+    "koa-logger": "^3.2.0",
     "koa-router": "^7.4.0",
     "koa-static": "^3.0.0",
-    "nodemon": "^1.17.3",
+    "nodemon": "^1.18.3",
     "pg": "^6.4.0",
     "pg-hstore": "^2.3.2",
-    "request": "^2.85.0",
-    "sequelize": "^4.37.6"
+    "request": "^2.87.0",
+    "sequelize": "^4.38.0"
   },
   "devDependencies": {},
   "scripts": {
