@@ -4,6 +4,7 @@
   "description": "service to vote for real political projects",
   "main": "main.js",
   "dependencies": {
+    "@koa/cors": "^2.2.2",
     "cheerio": "^1.0.0-rc.1",
     "iconv-lite": "^0.4.23",
     "koa": "^2.5.2",
