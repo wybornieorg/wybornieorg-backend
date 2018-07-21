@@ -9,7 +9,7 @@ const mamprawowiedziec = require('./mamprawowiedziec.js');
 const nazwazwyczajowa = require('./nazwazwyczajowa.js');
 
 db.sequelize.sync({
-  force: true
+  // force: true
 }).then(start)
 
 let update = true
