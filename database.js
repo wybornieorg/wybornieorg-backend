@@ -3,18 +3,7 @@ console.log('Uruchomiono database.js');
 
 const Sequelize = require('sequelize')
 
-var sequelize = new Sequelize('sejmortestdb', 'postgres', 'postgres', {
-  host: 'localhost',
-  dialect: 'postgres',
-  timestamps: true,
-  logging: false,
-
-  pool: {
-    max: 30,
-    min: 0,
-    idle: 10000
-  },
-})
+var sequelize = new Sequelize(process.env.DATABASE_URL)
 
 sequelize
   .authenticate()
