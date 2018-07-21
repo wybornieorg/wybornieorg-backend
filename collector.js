@@ -138,8 +138,8 @@ async function start () {
         return value.vote === 'Nieobecny'
       }).length / voting.deputies.length
 
-      if (voting.frekwencja === 0) {
-        continue;
+      if (voting.frekwencja === null || voting.frekwencja === NaN) {
+        voting.frekwencja = 0
       }
       console.log(voting.frekwencja);
 

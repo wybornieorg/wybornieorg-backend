@@ -48,7 +48,7 @@ const Voting = sequelize.define('voting', {
   "status": Sequelize.STRING,
   "frekwencja": Sequelize.FLOAT,
   "votingLink": Sequelize.STRING,
-  "votingDate": Sequelize.JSON,
+  "votingDate": Sequelize.DATE,
   "votingIntention": Sequelize.STRING,
   "numbers": Sequelize.JSON,
   "groupLinks": Sequelize.JSON,
