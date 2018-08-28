@@ -115,6 +115,49 @@ async function start() {
 
   })
 
+  router.get('/dev/glosowaniaBulk/:list', async (ctx) => {
+    ctx.type = 'html'
+    let votings = []
+
+    function parseList(list) {
+      let array = JSON.parse(Buffer.from(list, 'base64').toString())
+      array = array.map((el)=>{
+        [kadencja, posiedzenie, glosowanie] = el.split('/')
+        return {kadencja: parseInt(kadencja), posiedzenie: parseInt(posiedzenie), glosowanie: parseInt(glosowanie)}
+      })
+      console.log(array);
+      return array
+    }
+    promiseList = []
+
+    for (votingNumber of parseList(ctx.params.list)) {
+      // Promise.all?
+      promise = db.Voting.findOne({
+        where: {
+          numbers: {
+            kadencja: votingNumber.kadencja,
+            posiedzenie: votingNumber.posiedzenie,
+            glosowanie: votingNumber.glosowanie
+          }
+        },
+        include: [{
+          model: db.Project
+        },
+        {
+          model: db.MPW
+        },
+        {
+          model: db.Nazwa
+        }
+      ]
+      })
+      promiseList.push(promise)
+    }
+    votings = await Promise.all(promiseList)
+    ctx.body = votings
+  })
+
+
   router.get('/dev/mamprawowiedziec', async (ctx) => {
     ctx.type = 'html'
     ctx.body = await db.MPW.findAll()
