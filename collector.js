@@ -362,7 +362,7 @@ function getVotingDate(body, kadencja) {
 }
 
 function getVotingIntention(body) {
-    return body.indexOf('odrzucenie') !== -1 ? 'odrzucenie' : 'przyjęcie'
+  return body.indexOf('odrzucenie') !== -1 ? 'odrzucenie' : 'przyjęcie'
 }
 
 function getGroupLinks(body, kadencja) {

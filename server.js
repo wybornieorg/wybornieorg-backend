@@ -29,7 +29,7 @@ async function start() {
   })
 
   router.get('/dev/projekty', async (ctx) => {
-    ctx.type = 'html'
+    ctx.type = 'json'
     ctx.body = await db.Project.findAll({
       // attributes: ['drukNr', 'tytul', 'frekwencja', 'status', 'kadencja', 'votingDate']
     })
@@ -46,7 +46,7 @@ async function start() {
   })
 
   router.get('/dev/glosowania', async (ctx) => {
-    ctx.type = 'html'
+    ctx.type = 'json'
     let votings = await db.Voting.findAll({
       attributes: ['status', 'frekwencja', 'numbers', 'votingDate'],
       include: [{
@@ -63,9 +63,9 @@ async function start() {
   })
 
   router.get('/dev/glosowania/:kadencja', async (ctx) => {
-    ctx.type = 'html'
+    ctx.type = 'json'
     let votings = await db.Voting.findAll({
-      attributes: ['status', 'frekwencja', 'numbers', 'votingDate'],
+      attributes: ['status', 'frekwencja', 'numbers', 'votingDate', 'votingIntention'],
       where: {
         numbers: {
           kadencja: ctx.params.kadencja
@@ -92,8 +92,8 @@ async function start() {
   })
 
   router.get('/dev/glosowania/:kadencja/:posiedzenie/:glosowanie', async (ctx) => {
-    ctx.type = 'html'
-    ctx.body = await db.Voting.findOne({
+    ctx.type = 'json'
+    let voting = await db.Voting.findOne({
       where: {
         numbers: {
           kadencja: ctx.params.kadencja,
@@ -112,11 +112,16 @@ async function start() {
       }
     ]
     })
-
+    if (voting) {
+      ctx.body = voting
+    } else {
+      ctx.status = 404
+      ctx.body = {error: 'brak'}
+    }
   })
 
   router.get('/dev/glosowaniaBulk/:list', async (ctx) => {
-    ctx.type = 'html'
+    ctx.type = 'json'
     let votings = []
 
     function parseList(list) {
@@ -159,12 +164,12 @@ async function start() {
 
 
   router.get('/dev/mamprawowiedziec', async (ctx) => {
-    ctx.type = 'html'
+    ctx.type = 'json'
     ctx.body = await db.MPW.findAll()
   })
 
   router.get('/dev/nazwyzwyczajowe', async (ctx) => {
-    ctx.type = 'html'
+    ctx.type = 'json'
     ctx.body = await db.Nazwa.findAll()
   })
 
