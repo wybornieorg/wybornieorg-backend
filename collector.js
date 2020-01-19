@@ -21,6 +21,10 @@ const base = 'http://www.sejm.gov.pl';
 
 const kadencjeLinki = [
   {
+    nrKadencji: 9,
+    link: 'http://www.sejm.gov.pl/Sejm9.nsf/page.xsp/przeglad_projust'
+  },
+  {
     nrKadencji: 8,
     link: 'http://www.sejm.gov.pl/Sejm8.nsf/page.xsp/przeglad_projust'
   },
