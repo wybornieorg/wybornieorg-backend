@@ -3,7 +3,9 @@ console.log('Uruchomiono database.js');
 
 const Sequelize = require('sequelize')
 
-var sequelize = new Sequelize(process.env.DATABASE_URL)
+var sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialect: "postgres"
+})
 
 sequelize
   .authenticate()

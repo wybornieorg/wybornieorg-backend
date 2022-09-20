@@ -17,36 +17,36 @@ exports.update = function() {
   return update
 };
 
-const base = 'http://www.sejm.gov.pl';
+const base = 'https://www.sejm.gov.pl';
 
 const kadencjeLinki = [
   {
     nrKadencji: 9,
-    link: 'http://www.sejm.gov.pl/Sejm9.nsf/page.xsp/przeglad_projust'
+    link: 'https://www.sejm.gov.pl/Sejm9.nsf/page.xsp/przeglad_projust'
   },
   {
     nrKadencji: 8,
-    link: 'http://www.sejm.gov.pl/Sejm8.nsf/page.xsp/przeglad_projust'
+    link: 'https://www.sejm.gov.pl/Sejm8.nsf/page.xsp/przeglad_projust'
   },
   {
     nrKadencji: 7,
-    link: 'http://www.sejm.gov.pl/Sejm7.nsf/page.xsp/przeglad_projust'
+    link: 'https://www.sejm.gov.pl/Sejm7.nsf/page.xsp/przeglad_projust'
   },
   {
     nrKadencji: 6,
-    link: 'http://orka.sejm.gov.pl/projustall6.htm'
+    link: 'https://orka.sejm.gov.pl/projustall6.htm'
   },
   {
     nrKadencji: 5,
-    link: 'http://www.sejm.gov.pl/archiwum/prace/kadencja5/projustall5.htm'
+    link: 'https://www.sejm.gov.pl/archiwum/prace/kadencja5/projustall5.htm'
   },
   {
     nrKadencji: 4,
-    link: 'http://www.sejm.gov.pl/archiwum/prace/kadencja4/projustall4.htm'
+    link: 'https://www.sejm.gov.pl/archiwum/prace/kadencja4/projustall4.htm'
   },
   {
     nrKadencji: 3,
-    link: 'http://www.sejm.gov.pl/archiwum/prace/kadencja3/projust_all3.htm'
+    link: 'https://www.sejm.gov.pl/archiwum/prace/kadencja3/projust_all3.htm'
   },
 ];
 
@@ -261,7 +261,7 @@ function getProjects(body, kadencja) {
     project.tytul = project.tytul.replace(/\n/g, '').trim();
 
     project.trescLink = function(link) {
-      if (link.indexOf('http') === -1) {
+      if (link.indexOf('https') === -1) {
         link = base + link;
       }
       return link;
@@ -271,14 +271,14 @@ function getProjects(body, kadencja) {
 
     project.isapLink = element.eq(2).find('a').attr('href');
     project.przebiegLink = function(link) {
-      if (link.indexOf('http') === -1) {
+      if (link.indexOf('https') === -1) {
         link = base + link;
       }
       return link;
     }(element.eq(3).find('a').attr('href'));
 
     project.komisje = function(link) {
-      if (link !== undefined && link.indexOf('http') === -1) {
+      if (link !== undefined && link.indexOf('https') === -1) {
         link = base + link;
       }
       return link;
@@ -299,7 +299,7 @@ function scrapeDrukPdfLink(body, kadencja) {
   }).first().attr('href');
 
   if (kadencja === 5 || kadencja === 6) {
-    temp = 'http://orka.sejm.gov.pl' + temp;
+    temp = 'https://orka.sejm.gov.pl' + temp;
   }
   return temp;
 }
@@ -394,7 +394,7 @@ function getGroupLinks(body, kadencja) {
     if (kadencja > 6) {
       link = base + `/Sejm${kadencja}.nsf/` + link;
     } else {
-      link = link.replace('.', 'http://orka.sejm.gov.pl/SQL.nsf');
+      link = link.replace('.', 'https://orka.sejm.gov.pl/SQL.nsf');
     }
 
     links.push({
