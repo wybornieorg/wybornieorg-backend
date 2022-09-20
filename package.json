@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "service to vote for real political projects",
   "main": "main.js",
+  "engines": {
+    "node": "18.x"
+  },
   "dependencies": {
     "@koa/cors": "^2.2.2",
     "cheerio": "^1.0.0-rc.1",
