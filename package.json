@@ -22,7 +22,8 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon main.js -e js,html,css"
+    "start": "node main.js",
+    "dev": "nodemon main.js -e js,html,css"
   },
   "author": "fraunos",
   "license": "ISC"
