@@ -204,6 +204,7 @@ async function start () {
 // }
 
 function getBodyP(url) {
+  console.log(`Pobieranie ${url}`)
   return new Promise((resolve, reject) => {
     request({
       url: url,
