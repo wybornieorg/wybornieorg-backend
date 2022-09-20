@@ -1,7 +1,6 @@
 console.log('Uruchomiono server.js');
 
 const Koa = require('koa')
-const logger = require('koa-logger');
 // const https = require('https')
 const compress = require('koa-compress')
 const cors = require('@koa/cors');
@@ -14,9 +13,6 @@ const collectorStatus = require('./collector');
 async function start() {
   const app = new Koa()
   app.use(cors());
-  app.use(async ctx=>{
-    console.log(ctx.request.href)
-  });
   app.use(compress({
     threshold: 2048,
     flush: require('zlib')
@@ -136,7 +132,7 @@ async function start() {
       console.log(array);
       return array
     }
-    promiseList = []
+    let promiseList = []
 
     for (votingNumber of parseList(ctx.params.list)) {
       // Promise.all?
