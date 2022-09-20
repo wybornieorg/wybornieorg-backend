@@ -14,6 +14,9 @@ const collectorStatus = require('./collector');
 async function start() {
   const app = new Koa()
   app.use(cors());
+  app.use(async ctx=>{
+    console.log(ctx.request.href)
+  });
   app.use(compress({
     threshold: 2048,
     flush: require('zlib')
