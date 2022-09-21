@@ -1,75 +1,62 @@
 console.log('Uruchomiono database.js');
+const { Sequelize, Model, DataTypes } = require('sequelize');
+const sequelize = new Sequelize('sqlite::memory:');
 
-
-const Sequelize = require('sequelize')
-
-var sequelize = new Sequelize(process.env.DATABASE_URL, {
-  dialect: "postgres"
-})
-
-sequelize
-  .authenticate()
-  .then(function(err) {
-    console.log('Connection has been established successfully.');
-  })
-  .catch(function(err) {
-    console.log('Unable to connect to the database:', err);
-  })
-//
-// const User = sequelize.define('user', {
-//   login: Sequelize.STRING,
-//   password: Sequelize.STRING
-// })
 
 const Project = sequelize.define('project', {
-  "status": Sequelize.STRING,
-  "tytul": Sequelize.TEXT,
-  "opis": Sequelize.TEXT,
-  "trescLink": Sequelize.STRING,
-  "drukPdfLink": Sequelize.STRING,
-  "isapLink": Sequelize.STRING,
-  "przebiegLink": Sequelize.STRING,
-  "komisje": Sequelize.STRING,
-  "drukNr": Sequelize.INTEGER,
-  "kadencja": Sequelize.INTEGER,
-  "prawoUE": { type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false }
+  "status": DataTypes.STRING,
+  "tytul": DataTypes.TEXT,
+  "opis": DataTypes.TEXT,
+  "trescLink": DataTypes.STRING,
+  "drukPdfLink": DataTypes.STRING,
+  "isapLink": DataTypes.STRING,
+  "przebiegLink": DataTypes.STRING,
+  "komisje": DataTypes.STRING,
+  "drukNr": DataTypes.INTEGER,
+  "kadencja": DataTypes.INTEGER,
+  "prawoUE": { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false }
 });
 
 const Voting = sequelize.define('voting', {
-  "status": Sequelize.STRING,
-  "frekwencja": Sequelize.FLOAT,
-  "votingLink": Sequelize.STRING,
-  "votingDate": Sequelize.DATE,
-  "votingIntention": Sequelize.STRING,
-  "numbers": Sequelize.JSON,
-  "groupLinks": Sequelize.JSON,
-  "deputies": Sequelize.JSON,
+  "status": DataTypes.STRING,
+  "frekwencja": DataTypes.FLOAT,
+  "votingLink": DataTypes.STRING,
+  "votingDate": DataTypes.DATE,
+  "votingIntention": DataTypes.STRING,
+  "numbers": DataTypes.JSON,
+  "groupLinks": DataTypes.JSON,
+  "deputies": DataTypes.JSON,
 });
 
 const MamPrawoWiedziec = sequelize.define('mpw', {
-  "desc": Sequelize.TEXT,
-  "markup": Sequelize.TEXT,
-  "source": Sequelize.STRING,
-  "author": Sequelize.ARRAY(Sequelize.STRING),
-  "href": Sequelize.STRING,
+  "desc": DataTypes.TEXT,
+  "markup": DataTypes.TEXT,
+  "source": DataTypes.STRING,
+  "author": DataTypes.STRING,
+  "href": DataTypes.STRING,
   "numbers": {
-    type: Sequelize.JSON
+    type: DataTypes.JSON
   }
 });
 
 const NazwaZwyczajowa = sequelize.define('nazwa', {
-  "nazwaZwyczajowa": Sequelize.STRING,
+  "nazwaZwyczajowa": DataTypes.STRING,
   "numbers": {
-    type: Sequelize.JSON
+    type: DataTypes.JSON
   }
 });
 
-Project.belongsTo(Voting)
-Voting.hasMany(Project)
-MamPrawoWiedziec.belongsTo(Voting)
-Voting.hasOne(MamPrawoWiedziec)
-NazwaZwyczajowa.belongsTo(Voting)
-Voting.hasOne(NazwaZwyczajowa)
+Project.belongsTo(Voting);
+Voting.hasMany(Project);
+MamPrawoWiedziec.belongsTo(Voting);
+Voting.hasOne(MamPrawoWiedziec);
+NazwaZwyczajowa.belongsTo(Voting);
+Voting.hasOne(NazwaZwyczajowa);
+
+
+(async () => {
+  await sequelize.sync();
+})();
 
 module.exports = {
   'sequelize': sequelize,
