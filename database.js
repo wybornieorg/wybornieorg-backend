@@ -32,7 +32,7 @@ const MamPrawoWiedziec = sequelize.define('mpw', {
   "desc": DataTypes.TEXT,
   "markup": DataTypes.TEXT,
   "source": DataTypes.STRING,
-  "author": DataTypes.STRING,
+  "author": DataTypes.JSON,
   "href": DataTypes.STRING,
   "numbers": {
     type: DataTypes.JSON
