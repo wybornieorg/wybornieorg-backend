@@ -1,6 +1,6 @@
 console.log('Uruchomiono nazwazwyczajowa.js');
 
-const request = require('request');
+const axios = require('axios');
 
 const db = require('./database.js');
 
@@ -50,7 +50,8 @@ function parseVotingNumbers(desc) {
 }
 
 
-function getBodyP(url) {
+async function getBodyP(url) {
+  return await axios.get(url)
   return new Promise((resolve, reject) => {
     request({
       url: url,

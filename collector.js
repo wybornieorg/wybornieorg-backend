@@ -1,7 +1,7 @@
 console.log('Uruchomiono collector.js');
 
 const cheerio = require('cheerio');
-const request = require('request');
+const axios = require('axios');
 const iconv = require('iconv-lite');
 
 const db = require('./database.js');
@@ -51,16 +51,16 @@ const kadencjeLinki = [
 ];
 
 
-async function start () {
+async function start() {
   update = true
   let projects = [];
 
-  for (kadencja of kadencjeLinki) {
+  for (const kadencja of kadencjeLinki) {
     projects = projects.concat(getProjects(await getBodyP(kadencja.link), kadencja.nrKadencji));
   }
-  console.log(projects);
+  // console.log(projects);
 
-  for (project of projects) {
+  for (const project of projects) {
     test = await db.Project.findOne({
       where: {
         drukNr: project.drukNr
@@ -78,7 +78,7 @@ async function start () {
 
     voteData: {
       console.log(`Zbieranie danych o projekcie drukNr: ${project.drukNr}\n`);
-      console.log(project);
+      // console.log(project);
 
       console.log(`Pobieranie drukPdfLink z ${project.trescLink}`);
       if (project.kadencja > 4) {
@@ -95,7 +95,7 @@ async function start () {
         continue;
       }
       if (przebiegBody.search('wykonanie prawa Unii Europejskiej') !== -1) {
-          project.prawoUE = true;
+        project.prawoUE = true;
       }
       console.log(`Pobieranie opis z przebiegBody`);
       project.opis = getProjectDescription(przebiegBody, project.kadencja);
@@ -156,7 +156,7 @@ async function start () {
         console.log(`Zapisano w bazie danych glosowanie: ${result[0].votingLink}`);
         project.votingId = result[0].id
 
-        console.log(project);
+        // console.log(project);
 
       });
 
@@ -179,7 +179,7 @@ async function start () {
   await nazwazwyczajowa.start()
   console.log(`Ukończono ${new Date()}. Odpal następny update za 4 godziny.`);
   update = false
-  setTimeout(start, 1000*60*60*4)
+  setTimeout(start, 1000 * 60 * 60 * 4)
 }
 
 // NOTE: Co daje ta klasa? attendance i tak jest zapisywane, pomimo, że brak tej zmiennej w konstruktorze
@@ -203,31 +203,20 @@ async function start () {
 //   }
 // }
 
-function getBodyP(url) {
+async function getBodyP(url) {
   console.log(`Pobieranie ${url}`)
-  return new Promise((resolve, reject) => {
-    request({
-      url: url,
-      encoding: null,
-      timeout: 5000
-    }, (err, response, body) => {
-      if (err) {
-        reject(err);
-        setTimeout(start, 5000)
-        // throw err
-      }
-      else {
-        let test = body.toString().search('ISO-8859-2');
-        console.log(test);
-
-        if (test !== -1) {
-          resolve(iconv.decode(body, 'ISO-8859-2'));
-        } else {
-          resolve (iconv.decode(body, 'UTF-8'));
-        }
-      }
-    });
+  let body = await axios.get(url, {
+    responseType: 'arraybuffer',
+    responseEncoding: 'binary'
   });
+  let test = body.data.toString().search('ISO-8859-2');
+  // console.log(test);
+
+  if (test !== -1) {
+    return iconv.decode(body.data, 'ISO-8859-2');
+  } else {
+    return iconv.decode(body.data, 'UTF-8');
+  }
 }
 
 function getProjects(body, kadencja) {
@@ -285,10 +274,10 @@ function getProjects(body, kadencja) {
       return link;
     }(element.eq(4).find('a').attr('href'));
 
-    // console.log(project);
     projects.push(project);
 
   });
+  console.log(projects)
   return projects;
 }
 
@@ -332,7 +321,7 @@ function getVotingNumbers(votingLink) {
   })
   let [kadencja, posiedzenie, glosowanie] = data
   console.log(kadencja);
-  return {kadencja: kadencja, posiedzenie: posiedzenie, glosowanie: glosowanie}
+  return { kadencja: kadencja, posiedzenie: posiedzenie, glosowanie: glosowanie }
 }
 
 function getProjectDescription(body, kadencja) {
@@ -362,7 +351,7 @@ function getVotingDate(body, kadencja) {
   votingHour = votingDate.match(/[0-9]{2}:[0-9]{2}/).toString();
 
   votingDate = votingDay.split('-').concat(votingHour.split(':'))
-  votingDate = new Date(votingDate[2], votingDate[1]-1, votingDate[0], votingDate[3], votingDate[4])
+  votingDate = new Date(votingDate[2], votingDate[1] - 1, votingDate[0], votingDate[3], votingDate[4])
   return votingDate;
 }
 

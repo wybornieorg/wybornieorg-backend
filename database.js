@@ -54,10 +54,6 @@ NazwaZwyczajowa.belongsTo(Voting);
 Voting.hasOne(NazwaZwyczajowa);
 
 
-(async () => {
-  await sequelize.sync();
-})();
-
 module.exports = {
   'sequelize': sequelize,
   'Project': Project,

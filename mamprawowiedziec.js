@@ -1,7 +1,7 @@
 console.log('Uruchomiono mamprawowiedziec.js');
 
 const cheerio = require('cheerio');
-const request = require('request');
+const axios = require('axios');
 const iconv = require('iconv-lite');
 
 const db = require('./database.js');
@@ -93,7 +93,8 @@ function parseVotingNumbers(href) {
 }
 
 
-function getBodyP(url) {
+async function getBodyP(url) {
+  return await axios.get(url)
   return new Promise((resolve, reject) => {
     request({
       url: url,
