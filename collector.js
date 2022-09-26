@@ -122,7 +122,7 @@ async function start() {
 
       console.log(`Pobieranie groupLinks z votingBody`);
       voting.groupLinks = getGroupLinks(votingBody, project.kadencja);
-      console.log(project.groupLinks);
+      console.log(voting.groupLinks);
 
       voting.deputies = [];
 
@@ -158,8 +158,9 @@ async function start() {
 
         // console.log(project);
 
+      }).catch(e=>{
+        console.error(e)
       });
-
       // console.log(project);
       await db.Project.findOrCreate({
         where: {

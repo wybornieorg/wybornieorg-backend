@@ -41,7 +41,7 @@ async function start() {
      FROM votings \
      GROUP BY kadencja \
     `
-    ctx.body = await db.sequelize.query(query, { raw: true })
+    ctx.body = await db.sequelize.query(query)
   })
 
   router.get('/dev/glosowania', async (ctx) => {
@@ -67,7 +67,7 @@ async function start() {
       attributes: ['status', 'frekwencja', 'numbers', 'votingDate', 'votingIntention'],
       where: {
         numbers: {
-          kadencja: ctx.params.kadencja
+          kadencja: parseInt(ctx.params.kadencja)
         }
       },
       include: [{
@@ -95,9 +95,9 @@ async function start() {
     let voting = await db.Voting.findOne({
       where: {
         numbers: {
-          kadencja: ctx.params.kadencja,
-          posiedzenie: ctx.params.posiedzenie,
-          glosowanie: ctx.params.glosowanie
+          kadencja: parseInt(ctx.params.kadencja),
+          posiedzenie: parseInt(ctx.params.posiedzenie),
+          glosowanie: parseInt(ctx.params.glosowanie)
         }
       },
       include: [{
@@ -139,9 +139,9 @@ async function start() {
       promise = db.Voting.findOne({
         where: {
           numbers: {
-            kadencja: votingNumber.kadencja,
-            posiedzenie: votingNumber.posiedzenie,
-            glosowanie: votingNumber.glosowanie
+            kadencja: parseInt(votingNumber.kadencja),
+            posiedzenie: parseInt(votingNumber.posiedzenie),
+            glosowanie: parseInt(votingNumber.glosowanie)
           }
         },
         include: [{

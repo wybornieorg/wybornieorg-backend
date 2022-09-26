@@ -1,5 +1,5 @@
 {
-  "name": "sejmor",
+  "name": "wybornieorg-backend",
   "version": "1.0.0",
   "description": "service to vote for real political projects",
   "main": "main.js",
@@ -25,6 +25,6 @@
     "start": "node main.js",
     "dev": "nodemon main.js -e js,html,css"
   },
-  "author": "fraunos",
+  "author": "Michał Wołoszyn <michal.marian.woloszyn@gmail.com> (http://fraunos.me)",
   "license": "ISC"
 }
