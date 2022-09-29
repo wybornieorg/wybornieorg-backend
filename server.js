@@ -1,23 +1,20 @@
 console.log('Uruchomiono server.js');
 
 const Koa = require('koa')
-// const https = require('https')
 const compress = require('koa-compress')
 const cors = require('@koa/cors');
-// const lastDate = new Date().toLocaleString()
 
-const fs = require('fs')
 const router = require('koa-router')()
 const collectorStatus = require('./collector');
 
 async function start() {
   const app = new Koa()
-  app.use(cors());
   app.use(compress({
     threshold: 2048,
     flush: require('zlib')
       .Z_SYNC_FLUSH
   }));
+  app.use(cors());
   app.use(router.routes())
     .use(router.allowedMethods());
 
