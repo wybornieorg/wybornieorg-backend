@@ -1,7 +1,10 @@
 console.log('Uruchomiono database.js');
 const { Sequelize, Model, DataTypes } = require('sequelize');
-const sequelize = new Sequelize('sqlite::memory:');
 
+const sequelize = new Sequelize({
+  dialect: 'sqlite',
+  storage: 'wybornie.sqlite'
+});
 
 const Project = sequelize.define('project', {
   "status": DataTypes.STRING,
