@@ -34,7 +34,7 @@ const kadencjeLinki = [
   },
   {
     nrKadencji: 6,
-    link: 'https://orka.sejm.gov.pl/projustall6.htm'
+    link: 'https://www.sejm.gov.pl/prace/projustall6.htm'
   },
   {
     nrKadencji: 5,
