@@ -1,7 +1,6 @@
 console.log('Uruchomiono mamprawowiedziec.js');
 
 const cheerio = require('cheerio');
-const axios = require('axios');
 const iconv = require('iconv-lite');
 
 const db = require('./database.js');
@@ -94,22 +93,6 @@ function parseVotingNumbers(href) {
 
 
 async function getBodyP(url) {
-  return await axios.get(url)
-  return new Promise((resolve, reject) => {
-    request({
-      url: url,
-      encoding: null
-    }, (err, response, body) => {
-      if (err) reject(err);
-      else {
-        let test = body.toString().search('ISO-8859-2');
-
-        if (test !== -1) {
-          resolve(iconv.decode(body, 'ISO-8859-2'));
-        } else {
-          resolve (iconv.decode(body, 'UTF-8'));
-        }
-      }
-    });
-  });
+  const response = await fetch(url)
+  return await response.text()
 }

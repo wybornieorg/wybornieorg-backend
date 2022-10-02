@@ -1,7 +1,5 @@
 console.log('Uruchomiono nazwazwyczajowa.js');
 
-const axios = require('axios');
-
 const db = require('./database.js');
 
 db.Nazwa.drop()
@@ -51,16 +49,6 @@ function parseVotingNumbers(desc) {
 
 
 async function getBodyP(url) {
-  return await axios.get(url)
-  return new Promise((resolve, reject) => {
-    request({
-      url: url,
-      json: true
-    }, (err, response, body) => {
-      if (err) reject(err);
-      else {
-        resolve(response.body);
-      }
-    });
-  });
+  const response = await fetch(url)
+  return await response.text()
 }

@@ -1,7 +1,6 @@
 console.log('Uruchomiono collector.js');
 
 const cheerio = require('cheerio');
-const axios = require('axios');
 const iconv = require('iconv-lite');
 
 const db = require('./database.js');
@@ -206,17 +205,18 @@ async function start() {
 
 async function getBodyP(url) {
   console.log(`Pobieranie ${url}`)
-  let body = await axios.get(url, {
+  let response = await fetch(url, {
     responseType: 'arraybuffer',
     responseEncoding: 'binary'
   });
-  let test = body.data.toString().search('ISO-8859-2');
+  let body = await response.text()
+  let test = body.search('ISO-8859-2');
   // console.log(test);
 
   if (test !== -1) {
-    return iconv.decode(body.data, 'ISO-8859-2');
+    return iconv.decode(body, 'ISO-8859-2');
   } else {
-    return iconv.decode(body.data, 'UTF-8');
+    return iconv.decode(body, 'UTF-8');
   }
 }
 
