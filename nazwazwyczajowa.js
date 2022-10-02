@@ -50,5 +50,5 @@ function parseVotingNumbers(desc) {
 
 async function getBodyP(url) {
   const response = await fetch(url)
-  return await response.text()
+  return await response.json()
 }
