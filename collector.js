@@ -1,7 +1,6 @@
 console.log('Uruchomiono collector.js');
 
 const cheerio = require('cheerio');
-const iconv = require('iconv-lite');
 
 const db = require('./database.js');
 const mamprawowiedziec = require('./mamprawowiedziec.js');
@@ -87,7 +86,7 @@ async function start() {
       }
       console.log(`Pobieranie przebiegBody z ${project.przebiegLink}`);
 
-      przebiegBody = await getBodyP(project.przebiegLink);
+      const przebiegBody = await getBodyP(project.przebiegLink);
 
       if (przebiegBody.search('wycofany dnia') !== -1 || przebiegBody.indexOf(project.status) === -1) {
         console.log(`Pomijam pobieranie ${project.drukNr}`);
@@ -182,42 +181,12 @@ async function start() {
   setTimeout(start, 1000 * 60 * 60 * 4)
 }
 
-// NOTE: Co daje ta klasa? attendance i tak jest zapisywane, pomimo, że brak tej zmiennej w konstruktorze
-// class Project {
-//   constructor({
-//     tresc,
-//     status,
-//     tytul,
-//     isap,
-//     przebieg,
-//     drukNr,
-//     votings
-//   }) {
-//     this.tresc = tresc;
-//     this.status = status;
-//     this.tytul = tytul;
-//     this.isap = isap;
-//     this.przebieg = przebieg;
-//     this.drukNr = drukNr;
-//     this.votings = votings;
-//   }
-// }
-
 async function getBodyP(url) {
   console.log(`Pobieranie ${url}`)
-  let response = await fetch(url, {
-    responseType: 'arraybuffer',
-    responseEncoding: 'binary'
-  });
-  let body = await response.text()
-  let test = body.search('ISO-8859-2');
-  // console.log(test);
+  let response = await fetch(url);
 
-  if (test !== -1) {
-    return iconv.decode(body, 'ISO-8859-2');
-  } else {
-    return iconv.decode(body, 'UTF-8');
-  }
+  return await response.text()
+
 }
 
 function getProjects(body, kadencja) {
