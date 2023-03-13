@@ -17,7 +17,7 @@
     "pg": "^6.4.0",
     "pg-hstore": "^2.3.2",
     "sequelize": "^6.23.0",
-    "sqlite3": "^5.1.1"
+    "sqlite3": "^5.1.5"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
