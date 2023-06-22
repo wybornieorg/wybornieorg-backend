@@ -14,7 +14,9 @@ async function start() {
     flush: require('zlib')
       .Z_SYNC_FLUSH
   }));
-  app.use(cors());
+  app.use(cors({
+    'origin': () => '*'
+  }));
   app.use(router.routes())
     .use(router.allowedMethods());
 
@@ -77,7 +79,7 @@ async function start() {
       {
         model: db.Nazwa
       }
-    ]
+      ]
     })
 
     ctx.body = {
@@ -106,13 +108,13 @@ async function start() {
       {
         model: db.Nazwa
       }
-    ]
+      ]
     })
     if (voting) {
       ctx.body = voting
     } else {
       ctx.status = 404
-      ctx.body = {error: 'brak'}
+      ctx.body = { error: 'brak' }
     }
   })
 
@@ -122,9 +124,9 @@ async function start() {
 
     function parseList(list) {
       let array = JSON.parse(Buffer.from(list, 'base64').toString())
-      array = array.map((el)=>{
+      array = array.map((el) => {
         [kadencja, posiedzenie, glosowanie] = el.split('/')
-        return {kadencja: parseInt(kadencja), posiedzenie: parseInt(posiedzenie), glosowanie: parseInt(glosowanie)}
+        return { kadencja: parseInt(kadencja), posiedzenie: parseInt(posiedzenie), glosowanie: parseInt(glosowanie) }
       })
       console.log(array);
       return array
@@ -150,7 +152,7 @@ async function start() {
         {
           model: db.Nazwa
         }
-      ]
+        ]
       })
       promiseList.push(promise)
     }

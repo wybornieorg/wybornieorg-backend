@@ -7,7 +7,7 @@
     "node": "18.x"
   },
   "dependencies": {
-    "@koa/cors": "^2.2.2",
+    "@koa/cors": "^4.0.0",
     "cheerio": "^1.0.0-rc.1",
     "iconv-lite": "^0.4.23",
     "koa": "^2.5.2",
