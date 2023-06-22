@@ -17,6 +17,10 @@ async function start() {
   app.use(cors({
     'origin': () => '*'
   }));
+  app.use(async (ctx, next) => {
+    ctx.set('cache-control', 'max-age=604800')
+    await next()
+  })
   app.use(router.routes())
     .use(router.allowedMethods());
 
