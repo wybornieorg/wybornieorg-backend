@@ -123,17 +123,23 @@ async function saveVoting(kadencja, sitting, voting, detail) {
   return row;
 }
 
-async function saveProjects(kadencja, votingRow, detail, processesByNumber) {
+async function saveProjects(kadencja, votingRow, detail, processesByNumber, printsByNumber) {
   const druki = parseDruki(detail.title, detail.topic);
 
   for (const nr of druki) {
     const process = processesByNumber.get(nr);
+    // /processes only covers bills that went through a full legislative path;
+    // /prints covers every druk, so use it as the title fallback.
+    const tytul = process
+      ? process.titleFinal || process.title
+      : printsByNumber.get(nr) || `Projekt nr ${nr} (kadencja ${kadencja})`;
+
     const [project] = await db.Project.findOrCreate({
       where: { drukNr: nr, kadencja },
       defaults: {
         drukNr: nr,
         kadencja,
-        tytul: process ? process.titleFinal || process.title : `Projekt nr ${nr} (kadencja ${kadencja})`,
+        tytul,
         status: projectStatus(process),
         prawoUE: !!(process && process.UE === 'YES'),
         isapLink: process ? isapLink(process) : undefined,
@@ -170,6 +176,16 @@ async function collectTerm(kadencja) {
   }
   console.log(`procesy: ${processes.length}`);
 
+  const prints = (await fetchJson(`${base(kadencja)}/prints`)) || [];
+  const printsByNumber = new Map();
+  for (const p of prints) {
+    const n = parseInt(p.number);
+    if (!Number.isNaN(n)) {
+      printsByNumber.set(n, p.title);
+    }
+  }
+  console.log(`druki: ${prints.length}`);
+
   const summary = (await fetchJson(`${base(kadencja)}/votings`)) || [];
   const sittings = [...new Set(summary.map((s) => s.proceeding))].sort((a, b) => a - b);
   console.log(`posiedzenia: ${sittings.length}`);
@@ -200,7 +216,7 @@ async function collectTerm(kadencja) {
       }
 
       const votingRow = await saveVoting(kadencja, sitting, voting, detail);
-      await saveProjects(kadencja, votingRow, detail, processesByNumber);
+      await saveProjects(kadencja, votingRow, detail, processesByNumber, printsByNumber);
       saved++;
 
       if (saved % 50 === 0) {
