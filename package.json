@@ -1,28 +1,26 @@
 {
   "name": "wybornieorg-backend",
-  "version": "1.0.0",
-  "description": "service to vote for real political projects",
+  "version": "2.0.0",
+  "description": "Service to vote for real political projects - REST API + Sejm collector",
   "main": "main.js",
   "engines": {
-    "node": "18.x"
+    "node": ">=18"
   },
   "dependencies": {
-    "@koa/cors": "^4.0.0",
-    "cheerio": "^1.0.0-rc.1",
-    "iconv-lite": "^0.4.23",
-    "koa": "^2.5.2",
-    "koa-compress": "^2.0.0",
-    "koa-router": "^7.4.0",
-    "koa-static": "^3.0.0",
-    "pg": "^6.4.0",
-    "pg-hstore": "^2.3.2",
-    "sequelize": "^6.23.0",
-    "sqlite3": "^5.1.1"
+    "@koa/cors": "^5.0.0",
+    "@koa/router": "^15.7.0",
+    "cheerio": "^1.2.0",
+    "iconv-lite": "^0.7.3",
+    "koa": "^3.2.1",
+    "koa-compress": "^5.2.2",
+    "sequelize": "^6.37.8",
+    "sqlite3": "^5.1.7"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node main.js",
-    "dev": "nodemon main.js -e js,html,css"
+    "serve": "node server.js",
+    "collect": "COLLECT=1 node main.js",
+    "dev": "node --watch main.js"
   },
   "author": "Michał Wołoszyn <michal.marian.woloszyn@gmail.com> (http://fraunos.me)",
   "license": "ISC"

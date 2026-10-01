@@ -1,106 +1,125 @@
-console.log('Uruchomiono server.js');
-
-const Koa = require('koa')
-const compress = require('koa-compress')
+const zlib = require('zlib');
+const Koa = require('koa');
+const compress = require('koa-compress');
 const cors = require('@koa/cors');
+const Router = require('@koa/router');
 
-const router = require('koa-router')()
 const collectorStatus = require('./collector');
+const db = require('./database.js');
 
-async function start() {
-  const app = new Koa()
-  app.use(compress({
-    threshold: 2048,
-    flush: require('zlib')
-      .Z_SYNC_FLUSH
-  }));
-  app.use(cors({
-    'origin': () => '*'
-  }));
-  app.use(async (ctx, next) => {
-    ctx.set('cache-control', 'max-age=604800')
-    await next()
-  })
-  app.use(router.routes())
-    .use(router.allowedMethods());
+const router = new Router();
 
-  const db = require('./database.js');
+router.get('/dev/status', async (ctx) => {
+  ctx.body = { collectorStatus: collectorStatus.update() };
+});
 
-  router.get('/dev/status', async (ctx) => {
-    ctx.body = collectorStatus.update()
-  })
+router.get('/dev/projekty', async (ctx) => {
+  ctx.type = 'json';
+  ctx.body = await db.Project.findAll();
+});
 
-  router.get('/dev/projekty', async (ctx) => {
-    ctx.type = 'json'
-    ctx.body = await db.Project.findAll({
-      // attributes: ['drukNr', 'tytul', 'frekwencja', 'status', 'kadencja', 'votingDate']
-    })
-  })
+router.get('/dev/kadencje', async (ctx) => {
+  const [rows] = await db.sequelize.query(
+    "SELECT numbers ->> 'kadencja' AS kadencja FROM votings GROUP BY kadencja"
+  );
+  ctx.body = rows;
+});
 
-  router.get('/dev/kadencje', async (ctx) => {
-    // ctx.type = 'json'
-    let query = ` \
-    SELECT numbers ->> 'kadencja' AS kadencja \
-     FROM votings \
-     GROUP BY kadencja \
-    `
-    ctx.body = await db.sequelize.query(query)
-  })
+router.get('/dev/glosowania', async (ctx) => {
+  ctx.type = 'json';
+  const votings = await db.Voting.findAll({
+    attributes: ['status', 'frekwencja', 'numbers', 'votingDate'],
+    include: [{
+      model: db.Project,
+      attributes: ['drukNr', 'tytul', 'kadencja', 'prawoUE']
+    }]
+  });
 
-  router.get('/dev/glosowania', async (ctx) => {
-    ctx.type = 'json'
-    let votings = await db.Voting.findAll({
-      attributes: ['status', 'frekwencja', 'numbers', 'votingDate'],
-      include: [{
-        model: db.Project,
-        attributes: ['drukNr', 'tytul', 'kadencja', 'prawoUE']
-      }]
-    })
+  ctx.body = {
+    collectorStatus: collectorStatus.update(),
+    votings
+  };
+});
 
-
-    ctx.body = {
-      collectorStatus: collectorStatus.update(),
-      votings: votings
-    }
-  })
-
-  router.get('/dev/glosowania/:kadencja', async (ctx) => {
-    ctx.type = 'json'
-    let votings = await db.Voting.findAll({
-      attributes: ['status', 'frekwencja', 'numbers', 'votingDate', 'votingIntention'],
-      where: {
-        numbers: {
-          kadencja: parseInt(ctx.params.kadencja)
-        }
-      },
-      include: [{
-        model: db.Project,
-        attributes: ['drukNr', 'tytul', 'kadencja', 'prawoUE']
-      },
-      {
-        model: db.MPW
-      },
-      {
-        model: db.Nazwa
+router.get('/dev/glosowania/:kadencja', async (ctx) => {
+  ctx.type = 'json';
+  const votings = await db.Voting.findAll({
+    attributes: ['status', 'frekwencja', 'numbers', 'votingDate', 'votingIntention'],
+    where: {
+      numbers: {
+        kadencja: parseInt(ctx.params.kadencja)
       }
-      ]
-    })
-
-    ctx.body = {
-      collectorStatus: collectorStatus.update(),
-      votings: votings
+    },
+    include: [{
+      model: db.Project,
+      attributes: ['drukNr', 'tytul', 'kadencja', 'prawoUE']
+    },
+    {
+      model: db.MPW
+    },
+    {
+      model: db.Nazwa
     }
+    ]
+  });
 
-  })
+  ctx.body = {
+    collectorStatus: collectorStatus.update(),
+    votings
+  };
+});
 
-  router.get('/dev/glosowania/:kadencja/:posiedzenie/:glosowanie', async (ctx) => {
-    ctx.type = 'json'
-    let voting = await db.Voting.findOne({
+router.get('/dev/glosowania/:kadencja/:posiedzenie/:glosowanie', async (ctx) => {
+  ctx.type = 'json';
+  const voting = await db.Voting.findOne({
+    where: {
+      numbers: {
+        kadencja: parseInt(ctx.params.kadencja),
+        posiedzenie: parseInt(ctx.params.posiedzenie),
+        glosowanie: parseInt(ctx.params.glosowanie)
+      }
+    },
+    include: [{
+      model: db.Project
+    },
+    {
+      model: db.MPW
+    },
+    {
+      model: db.Nazwa
+    }
+    ]
+  });
+  if (voting) {
+    ctx.body = voting;
+  } else {
+    ctx.status = 404;
+    ctx.body = { error: 'brak' };
+  }
+});
+
+function parseList(list) {
+  const array = JSON.parse(Buffer.from(list, 'base64').toString());
+  return array.map((el) => {
+    const [kadencja, posiedzenie, glosowanie] = el.split('/');
+    return {
+      kadencja: parseInt(kadencja),
+      posiedzenie: parseInt(posiedzenie),
+      glosowanie: parseInt(glosowanie)
+    };
+  });
+}
+
+router.get('/dev/glosowaniaBulk/:list', async (ctx) => {
+  ctx.type = 'json';
+
+  const promiseList = parseList(ctx.params.list).map((votingNumber) =>
+    db.Voting.findOne({
       where: {
         numbers: {
-          kadencja: parseInt(ctx.params.kadencja),
-          posiedzenie: parseInt(ctx.params.posiedzenie),
-          glosowanie: parseInt(ctx.params.glosowanie)
+          kadencja: votingNumber.kadencja,
+          posiedzenie: votingNumber.posiedzenie,
+          glosowanie: votingNumber.glosowanie
         }
       },
       include: [{
@@ -114,71 +133,52 @@ async function start() {
       }
       ]
     })
-    if (voting) {
-      ctx.body = voting
-    } else {
-      ctx.status = 404
-      ctx.body = { error: 'brak' }
-    }
-  })
+  );
 
-  router.get('/dev/glosowaniaBulk/:list', async (ctx) => {
-    ctx.type = 'json'
-    let votings = []
+  ctx.body = await Promise.all(promiseList);
+});
 
-    function parseList(list) {
-      let array = JSON.parse(Buffer.from(list, 'base64').toString())
-      array = array.map((el) => {
-        [kadencja, posiedzenie, glosowanie] = el.split('/')
-        return { kadencja: parseInt(kadencja), posiedzenie: parseInt(posiedzenie), glosowanie: parseInt(glosowanie) }
-      })
-      console.log(array);
-      return array
-    }
-    let promiseList = []
+router.get('/dev/mamprawowiedziec', async (ctx) => {
+  ctx.type = 'json';
+  ctx.body = await db.MPW.findAll();
+});
 
-    for (votingNumber of parseList(ctx.params.list)) {
-      // Promise.all?
-      promise = db.Voting.findOne({
-        where: {
-          numbers: {
-            kadencja: parseInt(votingNumber.kadencja),
-            posiedzenie: parseInt(votingNumber.posiedzenie),
-            glosowanie: parseInt(votingNumber.glosowanie)
-          }
-        },
-        include: [{
-          model: db.Project
-        },
-        {
-          model: db.MPW
-        },
-        {
-          model: db.Nazwa
-        }
-        ]
-      })
-      promiseList.push(promise)
-    }
-    votings = await Promise.all(promiseList)
-    ctx.body = votings
-  })
+router.get('/dev/nazwyzwyczajowe', async (ctx) => {
+  ctx.type = 'json';
+  ctx.body = await db.Nazwa.findAll();
+});
 
+function createApp() {
+  const app = new Koa();
 
-  router.get('/dev/mamprawowiedziec', async (ctx) => {
-    ctx.type = 'json'
-    ctx.body = await db.MPW.findAll()
-  })
+  app.use(compress({
+    threshold: 2048,
+    flush: zlib.constants.Z_SYNC_FLUSH
+  }));
+  app.use(cors({ origin: () => '*' }));
+  app.use(async (ctx, next) => {
+    ctx.set('cache-control', 'max-age=604800');
+    await next();
+  });
+  app.use(router.routes());
+  app.use(router.allowedMethods());
 
-  router.get('/dev/nazwyzwyczajowe', async (ctx) => {
-    ctx.type = 'json'
-    ctx.body = await db.Nazwa.findAll()
-  })
-
-  // start server
-  const port = process.env.PORT || 3000
-
-  app.listen(port, () => console.log('Server listening on', port))
+  return app;
 }
 
-start()
+async function start() {
+  const port = process.env.PORT || 3000;
+  const app = createApp();
+
+  // Make sure the schema exists before we accept traffic.
+  await db.sequelize.sync();
+
+  return new Promise((resolve) => {
+    const server = app.listen(port, () => {
+      console.log(`Server listening on http://localhost:${port}`);
+      resolve(server);
+    });
+  });
+}
+
+module.exports = { createApp, start, router };

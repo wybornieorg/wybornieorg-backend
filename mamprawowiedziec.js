@@ -1,98 +1,96 @@
-console.log('Uruchomiono mamprawowiedziec.js');
-
 const cheerio = require('cheerio');
-const iconv = require('iconv-lite');
 
 const db = require('./database.js');
+const { getBodyP } = require('./fetch.js');
 
-db.MPW.drop()
-module.exports = { start }
+module.exports = { start };
 
 const base = 'http://serwis.mamprawowiedziec.pl';
 
-async function start () {
-  let arts = []
+async function start() {
+  try {
+    await run();
+  } catch (err) {
+    console.warn(`mamprawowiedziec: pomijam (${err.message})`);
+  }
+}
 
-  for (var i = 0; i < 34; i++) {
-    let page = await getBodyP(`${base}/archiwum.php?p=${i}`)
-    let $ = cheerio.load(page);
-    $('a').each((index, element) => {
-      let tmp = $(element)
-      if (tmp.text().search('Nowe prawa') > -1) {
-        console.log(`${tmp.text()} ${tmp.attr('href')}`)
-        arts.push({title: tmp.text(), href: base + tmp.attr('href')})
+async function run() {
+  let arts = [];
+
+  for (let i = 0; i < 34; i++) {
+    const page = await getBodyP(`${base}/archiwum.php?p=${i}`);
+    if (page === null) {
+      // Source is dead / unreachable — no point paging through all 34.
+      if (i === 0) {
+        console.warn('mamprawowiedziec: źródło nieosiągalne, pomijam.');
+        return;
       }
-    })
+      continue;
+    }
+    const $ = cheerio.load(page);
+    $('a').each((index, element) => {
+      const tmp = $(element);
+      if (tmp.text().search('Nowe prawa') > -1) {
+        arts.push({ title: tmp.text(), href: base + tmp.attr('href') });
+      }
+    });
   }
   console.log(`${arts.length} artykułów`);
 
-  let projects = []
-  for (variable of arts) {
-    let art = await getBodyP(`${base}/${variable.href}`)
-    let $ = cheerio.load(art);
-    let author = $('.author a').map((i, el) => {
-      return $(el).text()
-    }).get()
-    console.log(author);
+  let projects = [];
+  for (const variable of arts) {
+    const art = await getBodyP(variable.href);
+    if (art === null) {
+      continue;
+    }
+    const $ = cheerio.load(art);
+    const author = $('.author a').map((i, el) => {
+      return $(el).text();
+    }).get();
 
-    let tmp = { desc: '', markup: '', href: ''}
+    let tmp = { desc: '', markup: '', href: '' };
     $('#text').children().each((index, element) => {
       if ($(element).find('a').text().search('cieżka') > -1 || $(element).text().search('#') > -1) {
-
+        // skip
       } else if ($(element).find('a').text().search('łosowani') > -1) {
-        tmp.href = $(element).find('a').last().attr('href')
-        tmp.source = variable.href
-        tmp.author = author
-        // tmp.voting = $(element).next().find('a').attr('href')
-        projects.push(tmp)
-        tmp = { desc: '', markup: '', href: ''}
+        tmp.href = $(element).find('a').last().attr('href');
+        tmp.source = variable.href;
+        tmp.author = author;
+        projects.push(tmp);
+        tmp = { desc: '', markup: '', href: '' };
       } else {
-        tmp.desc += $(element).text()
-        tmp.markup += $(element).html()
+        tmp.desc += $(element).text();
+        tmp.markup += $(element).html();
       }
-    })
-  }
-  for (variable of projects) {
-    try {
-      variable.numbers = parseVotingNumbers(variable.href)
-    } catch (e) {
-      variable.numbers = {source: variable.source, href: variable.href, e: 'Link zepsuty'}
-      // throw e
-    }
-    console.log(variable.numbers)
-
-    let voting = await db.Voting.find({
-      where: {
-        numbers: variable.numbers
-      }
-    })
-    console.log();
-    try {
-      variable.votingId = voting.id
-    } catch (e) {
-
-    }
-
-    await db.MPW.findOrCreate({
-      where: {
-        numbers: variable.numbers
-      },
-      defaults: variable
-    }).then((result) => {
-      console.log(`Zapisano w bazie danych MamPrawoWiedziec: ${JSON.stringify(result[0].numbers)}`);
     });
   }
 
+  for (const variable of projects) {
+    try {
+      variable.numbers = parseVotingNumbers(variable.href);
+    } catch (e) {
+      variable.numbers = { source: variable.source, href: variable.href, e: 'Link zepsuty' };
+    }
 
+    const voting = await db.Voting.findOne({
+      where: { numbers: variable.numbers }
+    }).catch(() => null);
+    if (voting) {
+      variable.votingId = voting.id;
+    }
+
+    await db.MPW.findOrCreate({
+      where: { numbers: variable.numbers },
+      defaults: variable
+    }).then((result) => {
+      console.log(`Zapisano w bazie danych MamPrawoWiedziec: ${JSON.stringify(result[0].numbers)}`);
+    }).catch((e) => console.error(e));
+  }
 }
 
 function parseVotingNumbers(href) {
-  let [kadencja, posiedzenie, glosowanie] = href.match(/[0-9]+\,[0-9]+\,[0-9]+/)[0].split(',').map(a => parseInt(a))
-  return {kadencja, posiedzenie, glosowanie}
-}
-
-
-async function getBodyP(url) {
-  const response = await fetch(url)
-  return await response.text()
+  const [kadencja, posiedzenie, glosowanie] =
+    href.match(/[0-9]+,[0-9]+,[0-9]+/)[0].split(',').map((a) => parseInt(a));
+  return { kadencja, posiedzenie, glosowanie };
 }

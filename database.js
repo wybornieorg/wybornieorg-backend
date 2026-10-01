@@ -1,9 +1,10 @@
-console.log('Uruchomiono database.js');
-const { Sequelize, Model, DataTypes } = require('sequelize');
+const path = require('path');
+const { Sequelize, DataTypes } = require('sequelize');
 
 const sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: 'wybornie.sqlite'
+  storage: process.env.DB_PATH || path.join(__dirname, 'wybornie.sqlite'),
+  logging: false
 });
 
 const Project = sequelize.define('project', {
@@ -63,4 +64,4 @@ module.exports = {
   'Voting': Voting,
   'MPW': MamPrawoWiedziec,
   'Nazwa': NazwaZwyczajowa,
-}
+};
